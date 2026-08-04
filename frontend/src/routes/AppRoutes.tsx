@@ -6,6 +6,7 @@ import Otp from "../pages/Otp";
 import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile";
 import EditProfile from "../pages/EditProfile";
+import Applications from "../pages/Applications";
 
 function AppRoutes() {
   return (
@@ -20,6 +21,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/applications" element={<Applications />} />
       </Routes>
     </BrowserRouter>
   );
