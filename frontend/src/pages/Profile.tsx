@@ -1,4 +1,5 @@
 import { User, Mail, Phone, MapPin, ShieldCheck, Pencil } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function Profile() {
   return (
@@ -31,11 +32,13 @@ function Profile() {
               My Profile
             </h2>
 
-            <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700">
-              <Pencil size={18} />
-              Edit Profile
-            </button>
-          </div>
+            <Link to="/edit-profile">
+               <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700">
+                  <Pencil size={18} />
+                   Edit Profile
+               </button>
+             </Link>
+      </div>
 
           <div className="grid md:grid-cols-2 gap-6">
 
