@@ -4,6 +4,7 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Otp from "../pages/Otp";
 import Dashboard from "../pages/Dashboard";
+import Profile from "../pages/Profile";
 
 function AppRoutes() {
   return (
@@ -16,6 +17,7 @@ function AppRoutes() {
         <Route path="/otp" element={<Otp />} />
 
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );
