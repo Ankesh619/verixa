@@ -5,6 +5,7 @@ import Services from "../components/Services";
 import WhyVerixa from "../components/WhyVerixa";
 import AIAssistant from "../components/AIAssistant";
 import Footer from "../components/Footer";
+import AIChat from "../components/AIChat";
 
 function Home() {
   return (
@@ -16,6 +17,7 @@ function Home() {
       <WhyVerixa />
       <AIAssistant />
       <Footer />
+      <AIChat />
     </>
   );
 }
