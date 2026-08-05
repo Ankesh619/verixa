@@ -1,6 +1,8 @@
 import AdminLayout from "./AdminLayout";
+import { useState } from "react";
 
 function Services() {
+const [showEdit, setShowEdit] = useState(false);
   return (
     <AdminLayout>
 
@@ -74,9 +76,12 @@ function Services() {
 
               <td className="p-5">
 
-                <button className="text-blue-600 mr-4">
-                  Edit
-                </button>
+                <button
+  onClick={() => setShowEdit(true)}
+  className="text-blue-600 mr-4"
+>
+  Edit
+</button>
 
                 <button className="text-red-600">
                   Delete
@@ -92,6 +97,46 @@ function Services() {
 
       </div>
 
+    {showEdit && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+
+    <div className="bg-white rounded-2xl p-8 w-[500px]">
+
+      <h2 className="text-3xl font-bold mb-6">
+        Edit Service
+      </h2>
+
+      <input
+        className="w-full border rounded-xl p-4 mb-4"
+        defaultValue="PAN Card"
+      />
+
+      <input
+        className="w-full border rounded-xl p-4 mb-4"
+        defaultValue="199"
+      />
+
+      <div className="flex justify-end gap-3">
+
+        <button
+          onClick={() => setShowEdit(false)}
+          className="px-5 py-3 rounded-xl bg-gray-200"
+        >
+          Cancel
+        </button>
+
+        <button
+          className="px-5 py-3 rounded-xl bg-blue-600 text-white"
+        >
+          Save
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
     </AdminLayout>
   );
 }
