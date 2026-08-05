@@ -8,6 +8,7 @@ import Profile from "../pages/Profile";
 import EditProfile from "../pages/EditProfile";
 import Applications from "../pages/Applications";
 import TrackApplication from "../pages/TrackApplication";
+import Payments from "../pages/Payments";
 
 function AppRoutes() {
   return (
@@ -24,6 +25,7 @@ function AppRoutes() {
         <Route path="/edit-profile" element={<EditProfile />} />
         <Route path="/applications" element={<Applications />} />
         <Route path="/track-application" element={<TrackApplication />} />
+        <Route path="/payments" element={<Payments />} />
       </Routes>
     </BrowserRouter>
   );

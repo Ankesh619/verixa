@@ -1,3 +1,4 @@
+
 import {
   User,
   FileText,
@@ -65,21 +66,23 @@ function Dashboard() {
         </Link>
 
         {/* Payments */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition cursor-pointer">
+        <Link to="/payments">
+  <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition cursor-pointer">
 
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-yellow-100 text-yellow-600">
-            <CreditCard size={40} />
-          </div>
+    <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-yellow-100 text-yellow-600">
+      <CreditCard size={40} />
+    </div>
 
-          <h2 className="text-xl font-bold mt-6">
-            Payments
-          </h2>
+    <h2 className="text-xl font-bold mt-6">
+      Payments
+    </h2>
 
-          <p className="text-gray-500 mt-2">
-            View payment history
-          </p>
+    <p className="text-gray-500 mt-2">
+      View payment history
+    </p>
 
-        </div>
+  </div>
+</Link>
 
         {/* Notifications */}
         <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition cursor-pointer">
