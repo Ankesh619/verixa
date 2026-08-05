@@ -84,16 +84,18 @@ function Dashboard() {
   </div>
 </Link>
 <Link
-  to="/apply"
+  to="/start-service"
   className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
 >
+
   <h2 className="text-xl font-bold text-blue-600">
-    Apply Service
+    Start New Service
   </h2>
 
   <p className="text-gray-600 mt-2">
-    Apply for PAN, Passport, GST, Aadhaar and more.
+    Apply for any Government Service
   </p>
+
 </Link>
 
         {/* Notifications */}

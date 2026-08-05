@@ -10,6 +10,7 @@ import Applications from "../pages/Applications";
 import TrackApplication from "../pages/TrackApplication";
 import Payments from "../pages/Payments";
 import ApplyService from "../pages/ApplyService";
+import StartService from "../pages/StartService";
 
 function AppRoutes() {
   return (
@@ -28,6 +29,7 @@ function AppRoutes() {
         <Route path="/track-application" element={<TrackApplication />} />
         <Route path="/payments" element={<Payments />} />
         <Route path="/apply" element={<ApplyService />} />
+        <Route path="/start-service" element={<StartService />} />
       </Routes>
     </BrowserRouter>
   );
