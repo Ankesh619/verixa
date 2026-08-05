@@ -43,10 +43,16 @@ function Login() {
       window.confirmationResult = confirmationResult;
 
       navigate("/otp");
-    } catch (err) {
-      console.error(err);
-alert((err as Error).message);
-    }
+    } catch (err: any) {
+  console.error(err);
+
+  alert(
+    "Error Code: " +
+      err.code +
+      "\n\nMessage:\n" +
+      err.message
+  );
+}
   };
 
   return (
