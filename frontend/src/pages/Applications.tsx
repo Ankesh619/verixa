@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 function Applications() {
   return (
     <div className="min-h-screen bg-slate-100 p-8">
@@ -43,9 +44,12 @@ function Applications() {
               </td>
               <td className="text-center">02 Aug 2026</td>
               <td className="text-center">
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg">
-                  Track
-                </button>
+                <Link
+                      to="/track-application"
+                       className="bg-blue-600 text-white px-4 py-2 rounded-lg inline-block"
+       >
+           Track
+                  </Link>
               </td>
             </tr>
 
