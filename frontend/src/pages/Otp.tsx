@@ -1,9 +1,11 @@
 import { ShieldCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function Otp() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-indigo-100 flex items-center justify-center px-6">
-
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8">
 
         <h1 className="text-5xl font-extrabold text-blue-600 text-center">
@@ -30,6 +32,7 @@ function Otp() {
         />
 
         <button
+          onClick={() => navigate("/dashboard")}
           className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-semibold text-lg transition"
         >
           Verify OTP
@@ -47,7 +50,6 @@ function Otp() {
         </div>
 
       </div>
-
     </div>
   );
 }
