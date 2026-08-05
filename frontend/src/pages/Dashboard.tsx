@@ -83,6 +83,18 @@ function Dashboard() {
 
   </div>
 </Link>
+<Link
+  to="/apply"
+  className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
+>
+  <h2 className="text-xl font-bold text-blue-600">
+    Apply Service
+  </h2>
+
+  <p className="text-gray-600 mt-2">
+    Apply for PAN, Passport, GST, Aadhaar and more.
+  </p>
+</Link>
 
         {/* Notifications */}
         <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition cursor-pointer">
