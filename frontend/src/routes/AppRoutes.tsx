@@ -14,6 +14,7 @@ import StartService from "../pages/StartService";
 import ServiceDetails from "../pages/ServiceDetails";
 import AdminLogin from "../admin/AdminLogin";
 import AdminDashboard from "../admin/AdminDashboard";
+import Services from "../admin/Services";
 
 function AppRoutes() {
   return (
@@ -37,6 +38,10 @@ function AppRoutes() {
         <Route path="/admin/login" element={<AdminLogin />} />
 
 <Route path="/admin/dashboard" element={<AdminDashboard />} />
+<Route
+  path="/admin/services"
+  element={<Services />}
+/>
       </Routes>
     </BrowserRouter>
   );
