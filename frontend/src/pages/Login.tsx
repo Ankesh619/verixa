@@ -45,7 +45,7 @@ function Login() {
       navigate("/otp");
     } catch (err) {
       console.error(err);
-      alert("OTP Send Failed");
+alert((err as Error).message);
     }
   };
 
