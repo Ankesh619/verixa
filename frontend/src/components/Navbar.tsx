@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-md">
@@ -38,10 +40,11 @@ function Navbar() {
         </nav>
 
         {/* Login Button */}
-
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:scale-105">
-          Login
-        </button>
+        <Link to="/login">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:scale-105">
+            Login
+          </button>
+        </Link>
 
       </div>
     </header>
