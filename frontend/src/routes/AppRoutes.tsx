@@ -11,6 +11,7 @@ import TrackApplication from "../pages/TrackApplication";
 import Payments from "../pages/Payments";
 import ApplyService from "../pages/ApplyService";
 import StartService from "../pages/StartService";
+import ServiceDetails from "../pages/ServiceDetails";
 
 function AppRoutes() {
   return (
@@ -30,6 +31,7 @@ function AppRoutes() {
         <Route path="/payments" element={<Payments />} />
         <Route path="/apply" element={<ApplyService />} />
         <Route path="/start-service" element={<StartService />} />
+        <Route path="/service/:id" element={<ServiceDetails />} />
       </Routes>
     </BrowserRouter>
   );

@@ -12,12 +12,9 @@ import {
 function StartService() {
   return (
     <div className="min-h-screen bg-slate-100">
-
       {/* Header */}
       <div className="bg-blue-600 text-white p-8 shadow-lg">
-        <h1 className="text-4xl font-bold">
-          Start New Service
-        </h1>
+        <h1 className="text-4xl font-bold">Start New Service</h1>
 
         <p className="mt-2 text-blue-100">
           Select a service to continue
@@ -25,11 +22,8 @@ function StartService() {
       </div>
 
       <div className="max-w-7xl mx-auto p-8">
-
         {/* Search */}
-
         <div className="bg-white rounded-2xl shadow p-4 flex items-center gap-3 mb-10">
-
           <Search className="text-gray-400" />
 
           <input
@@ -37,16 +31,17 @@ function StartService() {
             placeholder="Search Service..."
             className="w-full outline-none"
           />
-
         </div>
 
-        {/* Identity */}
+        {/* Identity Services */}
 
         <h2 className="text-2xl font-bold mb-5">
           Identity Services
         </h2>
 
         <div className="grid md:grid-cols-3 gap-6 mb-10">
+
+          {/* PAN */}
 
           <Link
             to="/service/pan"
@@ -63,6 +58,8 @@ function StartService() {
             </p>
           </Link>
 
+          {/* Aadhaar */}
+
           <Link
             to="/service/aadhaar"
             className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
@@ -74,9 +71,11 @@ function StartService() {
             </h3>
 
             <p className="text-gray-500 mt-2">
-              Update, PVC Card
+              Mobile, Address, PVC
             </p>
           </Link>
+
+          {/* Passport */}
 
           <Link
             to="/service/passport"
@@ -103,7 +102,12 @@ function StartService() {
 
         <div className="grid md:grid-cols-3 gap-6 mb-10">
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
+          {/* GST */}
+
+          <Link
+            to="/service/gst"
+            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
+          >
             <Building2 className="text-orange-600" size={42} />
 
             <h3 className="font-bold text-xl mt-4">
@@ -111,11 +115,14 @@ function StartService() {
             </h3>
 
             <p className="text-gray-500 mt-2">
-              GST Related Services
+              New GST Registration
             </p>
-          </div>
+          </Link>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
+          {/* MSME */}
+
+          <div className="bg-white rounded-2xl shadow-lg p-6 opacity-60 cursor-not-allowed">
+
             <FileBadge className="text-red-600" size={42} />
 
             <h3 className="font-bold text-xl mt-4">
@@ -123,8 +130,9 @@ function StartService() {
             </h3>
 
             <p className="text-gray-500 mt-2">
-              Udyam Registration
+              Coming Soon
             </p>
+
           </div>
 
         </div>
@@ -137,7 +145,7 @@ function StartService() {
 
         <div className="grid md:grid-cols-3 gap-6">
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6 opacity-60 cursor-not-allowed">
 
             <HeartPulse className="text-pink-600" size={42} />
 
@@ -146,7 +154,7 @@ function StartService() {
             </h3>
 
             <p className="text-gray-500 mt-2">
-              Health Scheme
+              Coming Soon
             </p>
 
           </div>
