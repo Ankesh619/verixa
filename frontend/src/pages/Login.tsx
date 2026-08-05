@@ -1,19 +1,52 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Smartphone, ShieldCheck } from "lucide-react";
+import { auth } from "../firebase";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+
+declare global {
+  interface Window {
+    recaptchaVerifier: RecaptchaVerifier;
+    confirmationResult: any;
+  }
+}
 
 function Login() {
   const navigate = useNavigate();
-
   const [mobile, setMobile] = useState("");
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (mobile.length !== 10) {
       alert("Please enter a valid 10-digit mobile number.");
       return;
     }
 
-    navigate("/otp");
+    try {
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(
+          auth,
+          "recaptcha-container",
+          {
+            size: "normal",
+          }
+        );
+
+        await window.recaptchaVerifier.render();
+      }
+
+      const confirmationResult = await signInWithPhoneNumber(
+        auth,
+        "+91" + mobile,
+        window.recaptchaVerifier
+      );
+
+      window.confirmationResult = confirmationResult;
+
+      navigate("/otp");
+    } catch (err) {
+      console.error(err);
+      alert("OTP Send Failed");
+    }
   };
 
   return (
@@ -66,6 +99,11 @@ function Login() {
         >
           Continue
         </button>
+
+        <div
+          id="recaptcha-container"
+          className="flex justify-center mt-6"
+        ></div>
 
         <div className="mt-8 flex items-center justify-center gap-2 text-gray-500 text-sm">
 

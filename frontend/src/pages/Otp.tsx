@@ -1,11 +1,32 @@
-import { ShieldCheck } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ShieldCheck } from "lucide-react";
 
 function Otp() {
   const navigate = useNavigate();
+  const [otp, setOtp] = useState("");
+
+  const handleVerify = async () => {
+    if (otp.length !== 6) {
+      alert("Enter valid OTP");
+      return;
+    }
+
+    try {
+      await (window as any).confirmationResult.confirm(otp);
+
+      alert("Login Successful");
+
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      alert("Invalid OTP");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-indigo-100 flex items-center justify-center px-6">
+
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8">
 
         <h1 className="text-5xl font-extrabold text-blue-600 text-center">
@@ -17,22 +38,20 @@ function Otp() {
         </p>
 
         <p className="text-center text-gray-600 mt-6">
-          Enter the 6-digit OTP sent to
-        </p>
-
-        <p className="text-center font-bold text-lg mt-2">
-          +91 9876543210
+          Enter the 6-digit OTP
         </p>
 
         <input
           type="text"
           maxLength={6}
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
           placeholder="Enter OTP"
           className="w-full mt-8 border rounded-xl p-4 text-center text-2xl tracking-[12px] outline-none focus:ring-2 focus:ring-blue-500"
         />
 
         <button
-          onClick={() => navigate("/dashboard")}
+          onClick={handleVerify}
           className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-semibold text-lg transition"
         >
           Verify OTP
@@ -40,7 +59,7 @@ function Otp() {
 
         <div className="text-center mt-6">
           <button className="text-blue-600 font-semibold hover:underline">
-            Resend OTP (30s)
+            Resend OTP
           </button>
         </div>
 
@@ -50,6 +69,7 @@ function Otp() {
         </div>
 
       </div>
+
     </div>
   );
 }
