@@ -4,7 +4,6 @@ import {
   FileText,
   Users,
   CreditCard,
-  IndianRupee,
   FolderOpen,
   Settings,
   LogOut,
@@ -58,13 +57,7 @@ function AdminSidebar() {
           Services
         </Link>
 
-        <Link
-          to="/admin/pricing"
-          className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800"
-        >
-          <IndianRupee size={22} />
-          Pricing
-        </Link>
+        
 
         <Link
           to="/admin/payments"
@@ -73,7 +66,12 @@ function AdminSidebar() {
           <CreditCard size={22} />
           Payments
         </Link>
-
+         <Link
+  to="/admin/reports"
+  className="flex items-center gap-3 px-6 py-4 hover:bg-slate-800"
+>
+  📊 Reports
+</Link>
         <Link
           to="/admin/settings"
           className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800"
