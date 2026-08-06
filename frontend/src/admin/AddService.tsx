@@ -2,32 +2,69 @@ import { useState } from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
+const documentList = [
+  "Aadhaar Front",
+  "Aadhaar Back",
+  "PAN Card",
+  "Passport Photo",
+  "Signature",
+  "Bank Passbook",
+  "Electricity Bill",
+  "10th Marksheet",
+  "Income Certificate",
+  "Caste Certificate",
+  "Domicile Certificate",
+  "Birth Certificate",
+];
+
 function AddService() {
   const [serviceName, setServiceName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
+  const [requiredDocuments, setRequiredDocuments] = useState<string[]>([]);
+
+  const toggleDocument = (doc: string) => {
+    if (requiredDocuments.includes(doc)) {
+      setRequiredDocuments(
+        requiredDocuments.filter((item) => item !== doc)
+      );
+    } else {
+      setRequiredDocuments([...requiredDocuments, doc]);
+    }
+  };
 
   const handleSave = async () => {
-  try {
-    await addDoc(collection(db, "services"), {
-      serviceName,
-      category,
-      price: Number(price),
-      active: true,
-      createdAt: new Date(),
-    });
+    if (!serviceName || !category || !price) {
+      alert("Please fill all fields.");
+      return;
+    }
 
-    alert("Service Saved Successfully");
+    if (requiredDocuments.length === 0) {
+      alert("Please select at least one required document.");
+      return;
+    }
 
-    setServiceName("");
-    setCategory("");
-    setPrice("");
-  } catch (error: any) {
-  console.error(error);
+    try {
+      await addDoc(collection(db, "services"), {
+        serviceName,
+        category,
+        price: Number(price),
+        requiredDocuments,
+        active: true,
+        createdAt: new Date(),
+      });
 
-  alert(error.message);
-}
-};
+      alert("Service Saved Successfully");
+
+      setServiceName("");
+      setCategory("");
+      setPrice("");
+      setRequiredDocuments([]);
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message);
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -56,15 +93,39 @@ function AddService() {
       </select>
 
       <input
+        type="number"
         placeholder="Price"
         value={price}
         onChange={(e) => setPrice(e.target.value)}
-        className="w-full border rounded-xl p-4 mb-5"
+        className="w-full border rounded-xl p-4 mb-8"
       />
+
+      <h3 className="text-2xl font-bold mb-4">
+        Required Documents
+      </h3>
+
+      <div className="grid md:grid-cols-2 gap-3 mb-8">
+
+        {documentList.map((doc) => (
+          <label
+            key={doc}
+            className="flex items-center gap-3 border rounded-xl p-3 cursor-pointer hover:bg-gray-50"
+          >
+            <input
+              type="checkbox"
+              checked={requiredDocuments.includes(doc)}
+              onChange={() => toggleDocument(doc)}
+            />
+
+            <span>{doc}</span>
+          </label>
+        ))}
+
+      </div>
 
       <button
         onClick={handleSave}
-        className="bg-blue-600 text-white px-6 py-3 rounded-xl"
+        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl"
       >
         Save Service
       </button>
