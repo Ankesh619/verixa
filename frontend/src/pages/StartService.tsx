@@ -1,4 +1,10 @@
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 import {
   Search,
   CreditCard,
@@ -10,6 +16,26 @@ import {
 } from "lucide-react";
 
 function StartService() {
+const [services, setServices] = useState<any[]>([]);
+
+useEffect(() => {
+  loadServices();
+}, []);
+
+const loadServices = async () => {
+  const snapshot = await getDocs(collection(db, "services"));
+
+  const list: any[] = [];
+
+  snapshot.forEach((doc) => {
+    list.push({
+      id: doc.id,
+      ...doc.data(),
+    });
+  });
+
+  setServices(list);
+};
   return (
     <div className="min-h-screen bg-slate-100">
       {/* Header */}
@@ -136,6 +162,35 @@ function StartService() {
           </div>
 
         </div>
+        <h2 className="text-2xl font-bold mt-10 mb-5">
+  Services From Firebase
+</h2>
+
+<div className="grid md:grid-cols-3 gap-6">
+
+  {services.map((item) => (
+
+    <div
+      key={item.id}
+      className="bg-white rounded-2xl shadow-lg p-6"
+    >
+      <h3 className="text-xl font-bold">
+        {item.serviceName}
+      </h3>
+
+      <p className="text-gray-500 mt-2">
+        {item.category}
+      </p>
+
+      <p className="text-blue-600 font-bold mt-3">
+        ₹{item.price}
+      </p>
+
+    </div>
+
+  ))}
+
+</div>
 
         {/* Government */}
 
