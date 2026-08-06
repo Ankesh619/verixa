@@ -9,13 +9,14 @@ import EditProfile from "../pages/EditProfile";
 import Applications from "../pages/Applications";
 import TrackApplication from "../pages/TrackApplication";
 import Payments from "../pages/Payments";
-import ApplyService from "../pages/ApplyService";
+
 import StartService from "../pages/StartService";
 import ServiceDetails from "../pages/ServiceDetails";
 import AdminLogin from "../admin/AdminLogin";
 import AdminDashboard from "../admin/AdminDashboard";
 import Services from "../admin/Services";
 import AddService from "../admin/AddService";
+import ApplicationForm from "../pages/ApplicationForm";
 
 function AppRoutes() {
   return (
@@ -33,7 +34,10 @@ function AppRoutes() {
         <Route path="/applications" element={<Applications />} />
         <Route path="/track-application" element={<TrackApplication />} />
         <Route path="/payments" element={<Payments />} />
-        <Route path="/apply" element={<ApplyService />} />
+        <Route
+  path="/apply/:serviceId"
+  element={<ApplicationForm />}
+/>
         <Route path="/start-service" element={<StartService />} />
         <Route path="/service/:id" element={<ServiceDetails />} />
         <Route path="/admin/login" element={<AdminLogin />} />
