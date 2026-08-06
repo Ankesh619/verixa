@@ -22,10 +22,11 @@ function AddService() {
     setServiceName("");
     setCategory("");
     setPrice("");
-  } catch (error) {
-    console.error(error);
-    alert("Failed to save service.");
-  }
+  } catch (error: any) {
+  console.error(error);
+
+  alert(error.message);
+}
 };
 
   return (
