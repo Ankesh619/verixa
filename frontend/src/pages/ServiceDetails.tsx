@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 function ServiceDetails() {
@@ -43,7 +43,7 @@ useEffect(() => {
       <div className="bg-blue-600 text-white p-8">
 
         <h1 className="text-4xl font-bold">
-          {service.name}
+          {service.servicename}
         </h1>
 
         <p className="mt-2">
@@ -56,7 +56,7 @@ useEffect(() => {
   <div className="bg-white rounded-2xl shadow-lg p-8">
 
     <h2 className="text-3xl font-bold">
-      {service.name}
+      {service.servicename}
     </h2>
 
     <p className="mt-4">
@@ -67,10 +67,12 @@ useEffect(() => {
       ₹{service.price}
     </p>
 
-    <button className="mt-8 bg-blue-600 text-white px-6 py-3 rounded-xl">
-      Apply Now
-    </button>
-
+    <Link
+  to={`/apply/${service.id}`}
+  className="inline-block mt-8 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700"
+>
+  Apply Now
+</Link>
   </div>
 
 </div>
