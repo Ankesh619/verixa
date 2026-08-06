@@ -1,13 +1,32 @@
 import { useState } from "react";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 function AddService() {
   const [serviceName, setServiceName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
 
-  const handleSave = () => {
+  const handleSave = async () => {
+  try {
+    await addDoc(collection(db, "services"), {
+      serviceName,
+      category,
+      price: Number(price),
+      active: true,
+      createdAt: new Date(),
+    });
+
     alert("Service Saved Successfully");
-  };
+
+    setServiceName("");
+    setCategory("");
+    setPrice("");
+  } catch (error) {
+    console.error(error);
+    alert("Failed to save service.");
+  }
+};
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
