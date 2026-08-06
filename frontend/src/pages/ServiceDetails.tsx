@@ -1,10 +1,29 @@
-import { useParams, Link } from "react-router-dom";
-import { services } from "../data/services";
-
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 function ServiceDetails() {
   const { id } = useParams();
 
-  const service = services.find((item) => item.id === id);
+ const [service, setService] = useState<any>(null);
+
+useEffect(() => {
+  const loadService = async () => {
+    if (!id) return;
+
+    const docRef = doc(db, "services", id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      setService({
+        id: docSnap.id,
+        ...docSnap.data(),
+      });
+    }
+  };
+
+  loadService();
+}, [id]);
 
   if (!service) {
     return (
@@ -24,7 +43,7 @@ function ServiceDetails() {
       <div className="bg-blue-600 text-white p-8">
 
         <h1 className="text-4xl font-bold">
-          {service.icon} {service.name}
+          {service.name}
         </h1>
 
         <p className="mt-2">
@@ -32,38 +51,31 @@ function ServiceDetails() {
         </p>
 
       </div>
+<div className="max-w-6xl mx-auto p-8">
 
-      <div className="max-w-6xl mx-auto p-8 grid md:grid-cols-2 gap-6">
+  <div className="bg-white rounded-2xl shadow-lg p-8">
 
-        {service.works.map((work) => (
+    <h2 className="text-3xl font-bold">
+      {service.name}
+    </h2>
 
-          <Link
-            key={work.id}
-            to={`/apply/${service.id}/${work.id}`}
-            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
-          >
+    <p className="mt-4">
+      Category : {service.category}
+    </p>
 
-            <h2 className="text-2xl font-bold text-blue-600">
-              {work.title}
-            </h2>
+    <p className="mt-4 text-blue-600 font-bold text-2xl">
+      ₹{service.price}
+    </p>
 
-            <p className="mt-4">
-              💰 Fee : ₹{work.price}
-            </p>
+    <button className="mt-8 bg-blue-600 text-white px-6 py-3 rounded-xl">
+      Apply Now
+    </button>
 
-            <p className="mt-2">
-              ⏱ Time : {work.days}
-            </p>
+  </div>
 
-            <button className="mt-6 bg-blue-600 text-white px-5 py-3 rounded-xl">
-              Continue
-            </button>
-
-          </Link>
-
-        ))}
-
-      </div>
+</div>
+      
+       
 
     </div>
   );

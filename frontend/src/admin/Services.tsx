@@ -1,9 +1,32 @@
 import AdminLayout from "./AdminLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
 
 function Services() {
 const [showEdit, setShowEdit] = useState(false);
+const [services, setServices] = useState<any[]>([]);
+
+useEffect(() => {
+  loadServices();
+}, []);
+
+const loadServices = async () => {
+  const querySnapshot = await getDocs(collection(db, "services"));
+
+  const data = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  setServices(data);
+};
   return (
     <AdminLayout>
 
@@ -53,48 +76,50 @@ const [showEdit, setShowEdit] = useState(false);
 
           <tbody>
 
-            <tr className="border-t">
+  {services.map((service) => (
 
-              <td className="p-5">
-                New PAN Card
-              </td>
+    <tr key={service.id} className="border-t">
 
-              <td className="p-5">
-                Identity
-              </td>
+      <td className="p-5">
+        {service.serviceName}
+      </td>
 
-              <td className="p-5">
-                ₹199
-              </td>
+      <td className="p-5">
+        {service.category}
+      </td>
 
-              <td className="p-5">
+      <td className="p-5">
+        ₹{service.price}
+      </td>
 
-                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
+      <td className="p-5">
 
-                  Active
+        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
+          Active
+        </span>
 
-                </span>
+      </td>
 
-              </td>
+      <td className="p-5">
 
-              <td className="p-5">
+        <button
+          onClick={() => setShowEdit(true)}
+          className="text-blue-600 mr-4"
+        >
+          Edit
+        </button>
 
-                <button
-  onClick={() => setShowEdit(true)}
-  className="text-blue-600 mr-4"
->
-  Edit
-</button>
+        <button className="text-red-600">
+          Delete
+        </button>
 
-                <button className="text-red-600">
-                  Delete
-                </button>
+      </td>
 
-              </td>
+    </tr>
 
-            </tr>
+  ))}
 
-          </tbody>
+</tbody>
 
         </table>
 

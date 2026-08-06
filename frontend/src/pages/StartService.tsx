@@ -166,25 +166,25 @@ const loadServices = async () => {
 
 <div className="grid md:grid-cols-3 gap-6">
 
-  {services.map((item) => (
-
-    <div
-      key={item.id}
-      className="bg-white rounded-2xl shadow-lg p-6"
-    >
+  {services.map((service) => (
+  <Link
+    key={service.id}
+    to={`/service/${service.id}`}
+    className="bg-white rounded-2xl shadow-lg p-6 block hover:shadow-xl transition"
+  >
       <h3 className="text-xl font-bold">
-        {item.serviceName}
-      </h3>
+  {service.serviceName}
+</h3>
 
-      <p className="text-gray-500 mt-2">
-        {item.category}
-      </p>
+<p className="text-gray-500 mt-2">
+  {service.category}
+</p>
 
-      <p className="text-blue-600 font-bold mt-3">
-        ₹{item.price}
-      </p>
+<p className="text-blue-600 font-bold mt-3">
+  ₹{service.price}
+</p>
 
-    </div>
+    </Link>
 
   ))}
 
