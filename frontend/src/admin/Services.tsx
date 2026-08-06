@@ -1,31 +1,34 @@
 import AdminLayout from "./AdminLayout";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 function Services() {
 const [showEdit, setShowEdit] = useState(false);
   return (
     <AdminLayout>
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-8">
 
-        <div>
+  <div>
 
-          <h1 className="text-4xl font-bold">
-            Services
-          </h1>
+    <h1 className="text-3xl font-bold">
+      Services Management
+    </h1>
 
-          <p className="text-gray-500 mt-2">
-            Manage all VERIXA services
-          </p>
+    <p className="text-gray-500 mt-2">
+      Manage all VERIXA services
+    </p>
 
-        </div>
+  </div>
 
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700">
-          + Add Service
-        </button>
+  <Link
+    to="/admin/add-service"
+    className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700"
+  >
+    + Add New Service
+  </Link>
 
-      </div>
-
+</div>
       <div className="bg-white rounded-2xl shadow-lg mt-10 overflow-hidden">
 
         <table className="w-full">
