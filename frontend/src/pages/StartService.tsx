@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
 import { Link } from "react-router-dom";
+import { supabase } from "../supabase";
 
 import {
   Search,
@@ -14,40 +13,50 @@ import {
 } from "lucide-react";
 
 function StartService() {
-const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
 
-useEffect(() => {
-  loadServices();
-}, []);
+  useEffect(() => {
+    loadServices();
+  }, []);
 
-const loadServices = async () => {
-  const snapshot = await getDocs(collection(db, "services"));
+  const loadServices = async () => {
+    const { data, error } = await supabase
+      .from("services")
+      .select("*")
+      .eq("active", true)
+      .order("createdAt", { ascending: false });
 
-  const list: any[] = [];
+    if (error) {
+      console.error(error);
+      return;
+    }
 
-  snapshot.forEach((doc) => {
-    list.push({
-      id: doc.id,
-      ...doc.data(),
-    });
-  });
+    setServices(data || []);
+  };
 
-  setServices(list);
-};
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-50">
+
       {/* Header */}
-      <div className="bg-blue-600 text-white p-8 shadow-lg">
-        <h1 className="text-4xl font-bold">Start New Service</h1>
+
+      <div className="bg-blue-600 text-white p-8">
+
+        <h1 className="text-4xl font-bold">
+          Start New Service
+        </h1>
 
         <p className="mt-2 text-blue-100">
           Select a service to continue
         </p>
+
       </div>
 
       <div className="max-w-7xl mx-auto p-8">
+
         {/* Search */}
+
         <div className="bg-white rounded-2xl shadow p-4 flex items-center gap-3 mb-10">
+
           <Search className="text-gray-400" />
 
           <input
@@ -55,6 +64,7 @@ const loadServices = async () => {
             placeholder="Search Service..."
             className="w-full outline-none"
           />
+
         </div>
 
         {/* Identity Services */}
@@ -71,7 +81,11 @@ const loadServices = async () => {
             to="/service/pan"
             className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
           >
-            <CreditCard className="text-blue-600" size={42} />
+
+            <CreditCard
+              className="text-blue-600"
+              size={42}
+            />
 
             <h3 className="font-bold text-xl mt-4">
               PAN Card
@@ -80,6 +94,7 @@ const loadServices = async () => {
             <p className="text-gray-500 mt-2">
               New PAN, Correction, Reprint
             </p>
+
           </Link>
 
           {/* Aadhaar */}
@@ -88,7 +103,11 @@ const loadServices = async () => {
             to="/service/aadhaar"
             className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
           >
-            <IdCard className="text-green-600" size={42} />
+
+            <IdCard
+              className="text-green-600"
+              size={42}
+            />
 
             <h3 className="font-bold text-xl mt-4">
               Aadhaar
@@ -97,6 +116,7 @@ const loadServices = async () => {
             <p className="text-gray-500 mt-2">
               Mobile, Address, PVC
             </p>
+
           </Link>
 
           {/* Passport */}
@@ -105,7 +125,11 @@ const loadServices = async () => {
             to="/service/passport"
             className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
           >
-            <BadgeCheck className="text-purple-600" size={42} />
+
+            <BadgeCheck
+              className="text-purple-600"
+              size={42}
+            />
 
             <h3 className="font-bold text-xl mt-4">
               Passport
@@ -114,6 +138,7 @@ const loadServices = async () => {
             <p className="text-gray-500 mt-2">
               New & Renewal
             </p>
+
           </Link>
 
         </div>
@@ -132,7 +157,11 @@ const loadServices = async () => {
             to="/service/gst"
             className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
           >
-            <Building2 className="text-orange-600" size={42} />
+
+            <Building2
+              className="text-orange-600"
+              size={42}
+            />
 
             <h3 className="font-bold text-xl mt-4">
               GST Registration
@@ -141,13 +170,17 @@ const loadServices = async () => {
             <p className="text-gray-500 mt-2">
               New GST Registration
             </p>
+
           </Link>
 
           {/* MSME */}
 
           <div className="bg-white rounded-2xl shadow-lg p-6 opacity-60 cursor-not-allowed">
 
-            <FileBadge className="text-red-600" size={42} />
+            <FileBadge
+              className="text-red-600"
+              size={42}
+            />
 
             <h3 className="font-bold text-xl mt-4">
               MSME Registration
@@ -160,35 +193,45 @@ const loadServices = async () => {
           </div>
 
         </div>
+
+        {/* Supabase Services */}
+
         <h2 className="text-2xl font-bold mt-10 mb-5">
-  Services From Firebase
-</h2>
+          Available Services
+        </h2>
 
-<div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-6 mb-10">
 
-  {services.map((service) => (
-  <Link
-    key={service.id}
-    to={`/service/${service.id}`}
-    className="bg-white rounded-2xl shadow-lg p-6 block hover:shadow-xl transition"
-  >
-      <h3 className="text-xl font-bold">
-  {service.serviceName}
-</h3>
+          {services.map((service) => (
 
-<p className="text-gray-500 mt-2">
-  {service.category}
-</p>
+            <Link
+              key={service.id}
+              to={`/service/${service.id}`}
+              className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
+            >
 
-<p className="text-blue-600 font-bold mt-3">
-  ₹{service.price}
-</p>
+              <CreditCard
+                className="text-blue-600"
+                size={42}
+              />
 
-    </Link>
+              <h3 className="font-bold text-xl mt-4">
+                {service.serviceName}
+              </h3>
 
-  ))}
+              <p className="text-gray-500 mt-2">
+                {service.category}
+              </p>
 
-</div>
+              <p className="font-semibold text-blue-600 mt-3">
+                ₹{service.price}
+              </p>
+
+            </Link>
+
+          ))}
+
+        </div>
 
         {/* Government */}
 
@@ -200,7 +243,10 @@ const loadServices = async () => {
 
           <div className="bg-white rounded-2xl shadow-lg p-6 opacity-60 cursor-not-allowed">
 
-            <HeartPulse className="text-pink-600" size={42} />
+            <HeartPulse
+              className="text-pink-600"
+              size={42}
+            />
 
             <h3 className="font-bold text-xl mt-4">
               Ayushman Card
