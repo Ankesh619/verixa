@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { supabase } from "../supabase";
 
 const documentList = [
   "Aadhaar Front",
@@ -45,14 +44,21 @@ function AddService() {
     }
 
     try {
-      await addDoc(collection(db, "services"), {
-        serviceName,
-        category,
-        price: Number(price),
-        requiredDocuments,
-        active: true,
-        createdAt: new Date(),
-      });
+      const { error } = await supabase
+  .from("services")
+  .insert([
+    {
+      serviceName,
+      category,
+      price: Number(price),
+      requiredDocuments,
+      active: true,
+    },
+  ]);
+
+if (error) {
+  throw error;
+}
 
       alert("Service Saved Successfully");
 
