@@ -2,15 +2,7 @@ import AdminLayout from "./AdminLayout";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
-
-import { db } from "../firebase";
+import { supabase } from "../supabase";
 
 function Services() {
   const [services, setServices] = useState<any[]>([]);
@@ -29,14 +21,18 @@ function Services() {
   }, []);
 
   const loadServices = async () => {
-    const querySnapshot = await getDocs(collection(db, "services"));
+    const { data, error } = await supabase
+      .from("services")
+      .select("*")
+      .order("createdAt", { ascending: false });
 
-    const data = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
+    }
 
-    setServices(data);
+    setServices(data || []);
   };
 
   const openEdit = (service: any) => {
@@ -54,11 +50,22 @@ function Services() {
   const saveService = async () => {
     if (!editingId) return;
 
-    await updateDoc(doc(db, "services", editingId), {
-      serviceName,
-      category,
-      price: Number(price),
-    });
+    const { error } = await supabase
+      .from("services")
+      .update({
+        serviceName,
+        category,
+        price: Number(price),
+      })
+      .eq("id", editingId);
+
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
+    }
+
+    alert("Service Updated Successfully");
 
     setShowEdit(false);
 
@@ -72,7 +79,18 @@ function Services() {
 
     if (!ok) return;
 
-    await deleteDoc(doc(db, "services", id));
+    const { error } = await supabase
+      .from("services")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
+    }
+
+    alert("Service Deleted Successfully");
 
     loadServices();
   };
@@ -135,51 +153,53 @@ function Services() {
 
           </thead>
 
-          <tbody>{services.map((service) => (
+          <tbody>
 
-  <tr key={service.id} className="border-t">
+            {services.map((service) => (
 
-    <td className="p-5">
-      {service.serviceName}
-    </td>
+              <tr key={service.id}>
 
-    <td className="p-5">
-      {service.category}
-    </td>
+                <td className="p-5">
+                  {service.serviceName}
+                </td>
 
-    <td className="p-5">
-      ₹{service.price}
-    </td>
+                <td className="p-5">
+                  {service.category}
+                </td>
 
-    <td className="p-5">
+                <td className="p-5">
+                  ₹{service.price}
+                </td>
 
-      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
-        Active
-      </span>
+                <td className="p-5">
 
-    </td>
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                    Active
+                  </span>
 
-    <td className="p-5">
+                </td>
 
-      <button
-        onClick={() => openEdit(service)}
-        className="text-blue-600 font-semibold mr-4"
-      >
-        Edit
-      </button>
+                <td className="p-5">
 
-      <button
-        onClick={() => deleteService(service.id)}
-        className="text-red-600 font-semibold"
-      >
-        Delete
-      </button>
+                  <button
+                    onClick={() => openEdit(service)}
+                    className="text-blue-600 font-semibold mr-4"
+                  >
+                    Edit
+                  </button>
 
-    </td>
+                  <button
+                    onClick={() => deleteService(service.id)}
+                    className="text-red-600 font-semibold"
+                  >
+                    Delete
+                  </button>
 
-  </tr>
+                </td>
 
-))}
+              </tr>
+
+            ))}
 
           </tbody>
 
@@ -199,30 +219,53 @@ function Services() {
 
             <input
               value={serviceName}
-              onChange={(e) => setServiceName(e.target.value)}
+              onChange={(e) =>
+                setServiceName(e.target.value)
+              }
               className="w-full border rounded-xl p-4 mb-4"
               placeholder="Service Name"
             />
 
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) =>
+                setCategory(e.target.value)
+              }
               className="w-full border rounded-xl p-4 mb-4"
             >
-              <option value="">Select Category</option>
-              <option>Identity</option>
-              <option>Business</option>
-              <option>Government</option>
-              <option>Banking</option>
+
+              <option value="">
+                Select Category
+              </option>
+
+              <option>
+                Identity
+              </option>
+
+              <option>
+                Business
+              </option>
+
+              <option>
+                Government
+              </option>
+
+              <option>
+                Banking
+              </option>
+
             </select>
 
             <input
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) =>
+                setPrice(e.target.value)
+              }
               className="w-full border rounded-xl p-4 mb-5"
               placeholder="Price"
             />
-                        <div className="flex justify-end gap-3">
+
+            <div className="flex justify-end gap-3">
 
               <button
                 onClick={() => setShowEdit(false)}
