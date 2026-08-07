@@ -1,10 +1,9 @@
 import { useRef, useState } from "react";
 import {
   ref,
-  uploadBytes,
+  uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-
 import { storage } from "../firebase";
 
 type Props = {
@@ -18,74 +17,138 @@ function DocumentUploader({
   folder,
   onUploaded,
 }: Props) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [preview, setPreview] = useState("");
-
   const [uploading, setUploading] = useState(false);
-
-  const [progressText, setProgressText] =
-    useState("");
-
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
 
   const chooseFile = () => {
     fileInputRef.current?.click();
   };
 
-  const uploadFile = async (
-    file: File
-  ) => {
-    try {
-      setUploading(true);
-
-      setProgressText("Uploading...");
-
-      const fileName =
-        Date.now() + "_" + file.name;
-
-      const storageRef = ref(
-        storage,
-        `${folder}/${fileName}`
-      );
-
-      await uploadBytes(storageRef, file);
-
-      const url =
-        await getDownloadURL(storageRef);
-
-      setPreview(url);
-
-      onUploaded(url);
-
-      setProgressText("Upload Complete");
-
-      setUploading(false);
-    } catch (error) {
-      console.error(error);
-
-      setUploading(false);
-
-      setProgressText("Upload Failed");
+  const uploadFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file.");
+      return;
     }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Image must be less than 10 MB.");
+      return;
+    }
+
+    setError("");
+    setUploading(true);
+    setProgress(0);
+    setStatus("Uploading...");
+
+    const fileName =
+      `${Date.now()}_${file.name.replace(
+        /[^a-zA-Z0-9.-]/g,
+        "_"
+      )}`;
+
+    const storageRef = ref(
+      storage,
+      `${folder}/${fileName}`
+    );
+
+    const uploadTask = uploadBytesResumable(
+      storageRef,
+      file
+    );
+
+    uploadTask.on(
+      "state_changed",
+
+      (snapshot) => {
+        const percentage = Math.round(
+          (snapshot.bytesTransferred /
+            snapshot.totalBytes) *
+            100
+        );
+
+        setProgress(percentage);
+      },
+
+      (error) => {
+        console.error(
+          "Firebase Storage Upload Error:",
+          error
+        );
+
+        setUploading(false);
+        setProgress(0);
+        setStatus("");
+        setError(
+          error.message ||
+            "Document upload failed."
+        );
+      },
+
+      async () => {
+        try {
+          const url =
+            await getDownloadURL(uploadTask.snapshot.ref);
+
+          setPreview(url);
+
+          onUploaded(url);
+
+          setUploading(false);
+          setProgress(100);
+          setStatus("Document Uploaded Successfully");
+        } catch (error: any) {
+          console.error(
+            "Download URL Error:",
+            error
+          );
+
+          setUploading(false);
+          setStatus("");
+
+          setError(
+            error.message ||
+              "Could not get uploaded document URL."
+          );
+        }
+      }
+    );
   };
 
-  const onFileChange = async (
+  const onFileChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
 
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
-    await uploadFile(file);
+    uploadFile(file);
+
+    e.target.value = "";
+  };
+
+  const removeImage = () => {
+    setPreview("");
+    setProgress(0);
+    setStatus("");
+    setError("");
+    setUploading(false);
+
+    onUploaded("");
   };
 
   return (
-    <div className="border rounded-2xl p-6 bg-white shadow mb-6">
+    <div className="border rounded-2xl p-5 mb-5 bg-white">
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
 
         <div>
-
           <h3 className="text-xl font-bold">
             {title}
           </h3>
@@ -93,12 +156,13 @@ function DocumentUploader({
           <p className="text-gray-500 mt-1">
             Take Photo or Upload Image
           </p>
-
         </div>
 
         <button
+          type="button"
           onClick={chooseFile}
-          className="bg-blue-600 text-white px-5 py-3 rounded-xl"
+          disabled={uploading}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-5 py-3 rounded-xl font-semibold"
         >
           📷 Capture / Upload
         </button>
@@ -113,22 +177,51 @@ function DocumentUploader({
         hidden
         onChange={onFileChange}
       />
-            {preview && (
+
+      {uploading && (
+        <div className="mt-5">
+
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-blue-600 font-semibold">
+              Uploading...
+            </span>
+
+            <span className="font-semibold">
+              {progress}%
+            </span>
+          </div>
+
+          <div className="w-full bg-gray-200 rounded-full h-3">
+
+            <div
+              className="bg-blue-600 h-3 rounded-full transition-all"
+              style={{
+                width: `${progress}%`,
+              }}
+            />
+
+          </div>
+
+        </div>
+      )}
+
+      {preview && !uploading && (
         <div className="mt-6">
+
+          <p className="text-green-600 font-semibold mb-3">
+            ✅ Document Uploaded Successfully
+          </p>
 
           <img
             src={preview}
             alt={title}
-            className="w-full max-w-md rounded-xl border"
+            className="w-full max-w-md max-h-80 object-contain rounded-xl border"
           />
 
           <button
-            onClick={() => {
-              setPreview("");
-              onUploaded("");
-              setProgressText("");
-            }}
-            className="mt-4 bg-red-600 text-white px-5 py-2 rounded-xl"
+            type="button"
+            onClick={removeImage}
+            className="mt-4 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl"
           >
             Remove Image
           </button>
@@ -136,17 +229,19 @@ function DocumentUploader({
         </div>
       )}
 
-      {uploading && (
-        <p className="mt-4 text-blue-600 font-semibold">
-          Uploading...
-        </p>
+      {error && (
+        <div className="mt-4 bg-red-50 text-red-600 p-4 rounded-xl">
+          {error}
+        </div>
       )}
 
-      {!uploading && progressText !== "" && (
-        <p className="mt-4 text-green-600 font-semibold">
-          {progressText}
-        </p>
-      )}
+      {!uploading &&
+        !preview &&
+        status && (
+          <p className="mt-4 text-green-600 font-semibold">
+            {status}
+          </p>
+        )}
 
     </div>
   );
