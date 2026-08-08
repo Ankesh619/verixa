@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../firebase";
+import { supabase } from "../supabase";
 import DocumentUploader from "../components/DocumentUploader";
 
 function ApplicationForm() {
@@ -29,14 +22,20 @@ function ApplicationForm() {
       if (!serviceId) return;
 
       try {
-        const docRef = doc(db, "services", serviceId);
-        const docSnap = await getDoc(docRef);
+        const { data, error } = await supabase
+          .from("services")
+          .select("*")
+          .eq("id", serviceId)
+          .single();
 
-        if (docSnap.exists()) {
-          setService({
-            id: docSnap.id,
-            ...docSnap.data(),
-          });
+        if (error) {
+          console.error(error);
+          setError("Unable to load service");
+          return;
+        }
+
+        if (data) {
+          setService(data);
         } else {
           setError("Service not found");
         }
@@ -83,35 +82,49 @@ function ApplicationForm() {
     try {
       setSubmitting(true);
 
-      const applicationsRef = collection(db, "applications");
+      // Create application
+      const { data: application, error: applicationError } =
+        await supabase
+          .from("applications")
+          .insert({
+            customerName: customerName.trim(),
+            mobile: mobile.trim(),
+            serviceId: service.id,
+            serviceName: service.serviceName,
+            category: service.category || "",
+            price: Number(service.price || 0),
+            documents,
+            status: "Pending",
+          })
+          .select()
+          .single();
 
-      const applicationDoc = await addDoc(applicationsRef, {
-        customerName: customerName.trim(),
-        mobile: mobile.trim(),
-        serviceId: service.id,
-        serviceName: service.serviceName,
-        category: service.category || "",
-        price: Number(service.price || 0),
-        documents,
-        status: "Pending",
-        createdAt: serverTimestamp(),
-      });
+      if (applicationError) {
+        throw applicationError;
+      }
 
+      // Generate application number
       const generatedApplicationNo =
-        `VX-${new Date().getFullYear()}-${applicationDoc.id
+        `VX-${new Date().getFullYear()}-${String(application.id)
           .substring(0, 6)
           .toUpperCase()}`;
 
-      await addDoc(collection(db, "applicationNumbers"), {
-        applicationId: applicationDoc.id,
-        applicationNo: generatedApplicationNo,
-        createdAt: serverTimestamp(),
-      });
+      const { error: numberError } = await supabase
+        .from("applicationNumbers")
+        .insert({
+          applicationId: application.id,
+          applicationNo: generatedApplicationNo,
+        });
+
+      if (numberError) {
+        throw numberError;
+      }
 
       setApplicationNo(generatedApplicationNo);
       setSubmitted(true);
     } catch (err: any) {
       console.error(err);
+
       setError(
         err?.message || "Application submit failed."
       );
@@ -122,11 +135,11 @@ function ApplicationForm() {
 
   if (error && !service) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
-          <h1 className="text-2xl font-bold text-red-600">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-red-600">
             {error}
-          </h1>
+          </h2>
         </div>
       </div>
     );
@@ -134,8 +147,8 @@ function ApplicationForm() {
 
   if (!service) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <p className="text-xl font-semibold">
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 text-lg">
           Loading service...
         </p>
       </div>
@@ -144,8 +157,9 @@ function ApplicationForm() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
-        <div className="bg-white rounded-3xl shadow-xl p-10 max-w-lg w-full text-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-xl w-full text-center">
 
           <div className="text-6xl mb-6">
             ✅
@@ -161,6 +175,7 @@ function ApplicationForm() {
           </p>
 
           <div className="bg-blue-50 rounded-2xl p-6 mt-8">
+
             <p className="text-gray-600">
               Application Number
             </p>
@@ -168,6 +183,7 @@ function ApplicationForm() {
             <p className="text-2xl font-bold text-blue-600 mt-2">
               {applicationNo}
             </p>
+
           </div>
 
           <p className="text-gray-500 mt-6">
@@ -176,16 +192,18 @@ function ApplicationForm() {
           </p>
 
         </div>
+
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-50">
 
       {/* Header */}
 
       <div className="bg-blue-600 text-white p-8">
+
         <div className="max-w-5xl mx-auto">
 
           <h1 className="text-4xl font-bold">
@@ -197,6 +215,7 @@ function ApplicationForm() {
           </p>
 
         </div>
+
       </div>
 
       <div className="max-w-5xl mx-auto p-6 md:p-8">
@@ -208,6 +227,7 @@ function ApplicationForm() {
           <div className="flex justify-between items-center flex-wrap gap-4">
 
             <div>
+
               <h2 className="text-2xl font-bold">
                 {service.serviceName}
               </h2>
@@ -215,6 +235,7 @@ function ApplicationForm() {
               <p className="text-gray-500 mt-2">
                 Category: {service.category}
               </p>
+
             </div>
 
             <div className="text-2xl font-bold text-blue-600">
@@ -281,8 +302,10 @@ function ApplicationForm() {
           </p>
 
           {service.requiredDocuments?.length > 0 ? (
+
             service.requiredDocuments.map(
               (documentName: string) => (
+
                 <DocumentUploader
                   key={documentName}
                   title={documentName}
@@ -294,13 +317,17 @@ function ApplicationForm() {
                     }));
                   }}
                 />
+
               )
             )
+
           ) : (
+
             <div className="bg-yellow-50 text-yellow-700 p-4 rounded-xl">
               No required documents have been added for
               this service.
             </div>
+
           )}
 
           {error && (
