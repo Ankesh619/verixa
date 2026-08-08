@@ -4,6 +4,21 @@ import { Link } from "react-router-dom";
 
 import { supabase } from "../supabase";
 
+const documentList = [
+  "Aadhaar Front",
+  "Aadhaar Back",
+  "PAN Card",
+  "Passport Photo",
+  "Signature",
+  "Bank Passbook",
+  "Electricity Bill",
+  "10th Marksheet",
+  "Income Certificate",
+  "Caste Certificate",
+  "Domicile Certificate",
+  "Birth Certificate",
+];
+
 function Services() {
   const [services, setServices] = useState<any[]>([]);
   const [showEdit, setShowEdit] = useState(false);
@@ -11,10 +26,10 @@ function Services() {
   const [editingId, setEditingId] = useState("");
 
   const [serviceName, setServiceName] = useState("");
-
   const [category, setCategory] = useState("");
-
   const [price, setPrice] = useState("");
+
+  const [requiredDocuments, setRequiredDocuments] = useState<string[]>([]);
 
   useEffect(() => {
     loadServices();
@@ -38,24 +53,65 @@ function Services() {
   const openEdit = (service: any) => {
     setEditingId(service.id);
 
-    setServiceName(service.serviceName);
+    setServiceName(service.serviceName || "");
+    setCategory(service.category || "");
+    setPrice(String(service.price ?? ""));
 
-    setCategory(service.category);
-
-    setPrice(String(service.price));
+    // Supabase jsonb से documents array लेना
+    if (Array.isArray(service.requiredDocuments)) {
+      setRequiredDocuments(service.requiredDocuments);
+    } else {
+      setRequiredDocuments([]);
+    }
 
     setShowEdit(true);
+  };
+
+  const toggleDocument = (documentName: string) => {
+    if (requiredDocuments.includes(documentName)) {
+      setRequiredDocuments(
+        requiredDocuments.filter(
+          (item) => item !== documentName
+        )
+      );
+    } else {
+      setRequiredDocuments([
+        ...requiredDocuments,
+        documentName,
+      ]);
+    }
   };
 
   const saveService = async () => {
     if (!editingId) return;
 
+    if (!serviceName.trim()) {
+      alert("Please enter service name.");
+      return;
+    }
+
+    if (!category) {
+      alert("Please select category.");
+      return;
+    }
+
+    if (!price) {
+      alert("Please enter price.");
+      return;
+    }
+
+    if (requiredDocuments.length === 0) {
+      alert("Please select at least one required document.");
+      return;
+    }
+
     const { error } = await supabase
       .from("services")
       .update({
-        serviceName,
+        serviceName: serviceName.trim(),
         category,
         price: Number(price),
+        requiredDocuments,
       })
       .eq("id", editingId);
 
@@ -209,9 +265,9 @@ function Services() {
 
       {showEdit && (
 
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center overflow-y-auto p-4">
 
-          <div className="bg-white rounded-2xl p-8 w-[500px]">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-[600px] my-8">
 
             <h2 className="text-3xl font-bold mb-6">
               Edit Service
@@ -257,13 +313,47 @@ function Services() {
             </select>
 
             <input
+              type="number"
               value={price}
               onChange={(e) =>
                 setPrice(e.target.value)
               }
-              className="w-full border rounded-xl p-4 mb-5"
+              className="w-full border rounded-xl p-4 mb-6"
               placeholder="Price"
             />
+
+            <h3 className="text-2xl font-bold mb-4">
+              Required Documents
+            </h3>
+
+            <div className="grid md:grid-cols-2 gap-3 mb-8">
+
+              {documentList.map((documentName) => (
+
+                <label
+                  key={documentName}
+                  className="flex items-center gap-3 border rounded-xl p-3 cursor-pointer hover:bg-gray-50"
+                >
+
+                  <input
+                    type="checkbox"
+                    checked={requiredDocuments.includes(
+                      documentName
+                    )}
+                    onChange={() =>
+                      toggleDocument(documentName)
+                    }
+                  />
+
+                  <span>
+                    {documentName}
+                  </span>
+
+                </label>
+
+              ))}
+
+            </div>
 
             <div className="flex justify-end gap-3">
 
