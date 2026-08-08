@@ -3,25 +3,104 @@ import { useParams } from "react-router-dom";
 import { supabase } from "../supabase";
 import DocumentUploader from "../components/DocumentUploader";
 
+type Service = {
+  id: string;
+  serviceName: string;
+  category: string;
+  price: number;
+  requiredDocuments: string[];
+};
+
 function ApplicationForm() {
   const { serviceId } = useParams();
 
-  const [service, setService] = useState<any>(null);
+  const [service, setService] = useState<Service | null>(null);
+
   const [customerName, setCustomerName] = useState("");
   const [mobile, setMobile] = useState("");
+
   const [documents, setDocuments] = useState<{
     [key: string]: string;
   }>({});
+
   const [submitting, setSubmitting] = useState(false);
   const [applicationNo, setApplicationNo] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
+  /*
+   * Convert requiredDocuments into a proper string array.
+   *
+   * Supabase JSONB may return:
+   * ["Aadhaar Front", "PAN Card"]
+   *
+   * or sometimes:
+   * {"0":"Aadhaar Front","1":"PAN Card"}
+   *
+   * or a JSON string.
+   */
+  const normalizeDocuments = (value: any): string[] => {
+    if (!value) {
+      return [];
+    }
+
+    if (Array.isArray(value)) {
+      return value.filter(
+        (item) => typeof item === "string"
+      );
+    }
+
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+
+        if (Array.isArray(parsed)) {
+          return parsed.filter(
+            (item) => typeof item === "string"
+          );
+        }
+
+        if (
+          parsed &&
+          typeof parsed === "object"
+        ) {
+          return Object.values(parsed).filter(
+            (item): item is string =>
+              typeof item === "string"
+          );
+        }
+      } catch (error) {
+        console.error(
+          "requiredDocuments JSON parse error:",
+          error
+        );
+      }
+
+      return [];
+    }
+
+    if (
+      typeof value === "object"
+    ) {
+      return Object.values(value).filter(
+        (item): item is string =>
+          typeof item === "string"
+      );
+    }
+
+    return [];
+  };
+
   useEffect(() => {
     const loadService = async () => {
-      if (!serviceId) return;
+      if (!serviceId) {
+        setError("Service ID not found.");
+        return;
+      }
 
       try {
+        setError("");
+
         const { data, error } = await supabase
           .from("services")
           .select("*")
@@ -29,19 +108,53 @@ function ApplicationForm() {
           .single();
 
         if (error) {
-          console.error(error);
-          setError("Unable to load service");
+          console.error(
+            "Service Load Error:",
+            error
+          );
+
+          setError(
+            error.message ||
+              "Unable to load service."
+          );
+
           return;
         }
 
-        if (data) {
-          setService(data);
-        } else {
-          setError("Service not found");
+        if (!data) {
+          setError("Service not found.");
+          return;
         }
+
+        const normalizedService: Service = {
+          id: data.id,
+          serviceName:
+            data.serviceName || "",
+          category:
+            data.category || "",
+          price:
+            Number(data.price || 0),
+          requiredDocuments:
+            normalizeDocuments(
+              data.requiredDocuments
+            ),
+        };
+
+        console.log(
+          "Loaded Service:",
+          normalizedService
+        );
+
+        setService(normalizedService);
       } catch (err) {
-        console.error(err);
-        setError("Unable to load service");
+        console.error(
+          "Service Load Exception:",
+          err
+        );
+
+        setError(
+          "Unable to load service."
+        );
       }
     };
 
@@ -52,29 +165,51 @@ function ApplicationForm() {
     setError("");
 
     if (!customerName.trim()) {
-      setError("Please enter your name.");
+      setError(
+        "Please enter your name."
+      );
       return;
     }
 
     if (!mobile.trim()) {
-      setError("Please enter your mobile number.");
+      setError(
+        "Please enter your mobile number."
+      );
       return;
     }
 
     if (mobile.trim().length !== 10) {
-      setError("Please enter a valid 10 digit mobile number.");
+      setError(
+        "Please enter a valid 10 digit mobile number."
+      );
       return;
     }
 
-    const requiredDocuments = service?.requiredDocuments || [];
-
-    const missingDocuments = requiredDocuments.filter(
-      (documentName: string) => !documents[documentName]
-    );
-
-    if (missingDocuments.length > 0) {
+    if (!service) {
       setError(
-        `Please upload: ${missingDocuments.join(", ")}`
+        "Service information is not available."
+      );
+      return;
+    }
+
+    const requiredDocuments =
+      normalizeDocuments(
+        service.requiredDocuments
+      );
+
+    const missingDocuments =
+      requiredDocuments.filter(
+        (documentName) =>
+          !documents[documentName]
+      );
+
+    if (
+      missingDocuments.length > 0
+    ) {
+      setError(
+        `Please upload: ${missingDocuments.join(
+          ", "
+        )}`
       );
       return;
     }
@@ -82,82 +217,155 @@ function ApplicationForm() {
     try {
       setSubmitting(true);
 
-      // Create application
-      const { data: application, error: applicationError } =
-        await supabase
-          .from("applications")
-          .insert({
-            customerName: customerName.trim(),
-            mobile: mobile.trim(),
-            serviceId: service.id,
-            serviceName: service.serviceName,
-            category: service.category || "",
-            price: Number(service.price || 0),
-            documents,
-            status: "Pending",
-          })
-          .select()
-          .single();
+      /*
+       * Create application
+       */
+      const {
+        data: application,
+        error: applicationError,
+      } = await supabase
+        .from("applications")
+        .insert({
+          customerName:
+            customerName.trim(),
+
+          mobile:
+            mobile.trim(),
+
+          serviceId:
+            service.id,
+
+          serviceName:
+            service.serviceName,
+
+          category:
+            service.category || "",
+
+          price:
+            Number(service.price || 0),
+
+          documents,
+
+          status: "Pending",
+
+          createdAt:
+            new Date().toISOString(),
+        })
+        .select()
+        .single();
 
       if (applicationError) {
+        console.error(
+          "Application Insert Error:",
+          applicationError
+        );
+
         throw applicationError;
       }
 
-      // Generate application number
+      if (!application) {
+        throw new Error(
+          "Application could not be created."
+        );
+      }
+
+      /*
+       * Generate Application Number
+       */
       const generatedApplicationNo =
-        `VX-${new Date().getFullYear()}-${String(application.id)
+        `VX-${new Date().getFullYear()}-${String(
+          application.id
+        )
           .substring(0, 6)
           .toUpperCase()}`;
 
-      const { error: numberError } = await supabase
+      /*
+       * Save Application Number
+       */
+      const {
+        error: numberError,
+      } = await supabase
         .from("applicationNumbers")
         .insert({
-          applicationId: application.id,
-          applicationNo: generatedApplicationNo,
+          applicationId:
+            application.id,
+
+          applicationNo:
+            generatedApplicationNo,
+
+          createdAt:
+            new Date().toISOString(),
         });
 
       if (numberError) {
+        console.error(
+          "Application Number Error:",
+          numberError
+        );
+
         throw numberError;
       }
 
-      setApplicationNo(generatedApplicationNo);
+      setApplicationNo(
+        generatedApplicationNo
+      );
+
       setSubmitted(true);
     } catch (err: any) {
-      console.error(err);
+      console.error(
+        "Application Submit Error:",
+        err
+      );
 
       setError(
-        err?.message || "Application submit failed."
+        err?.message ||
+          "Application submit failed."
       );
     } finally {
       setSubmitting(false);
     }
   };
 
+  /*
+   * Error screen
+   */
   if (error && !service) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-red-600">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-xl w-full text-center">
+
+          <div className="text-5xl mb-5">
+            ⚠️
+          </div>
+
+          <h1 className="text-2xl font-bold text-red-600">
             {error}
-          </h2>
+          </h1>
+
         </div>
       </div>
     );
   }
 
+  /*
+   * Loading
+   */
   if (!service) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-lg">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-xl font-semibold text-gray-600">
           Loading service...
-        </p>
+        </div>
       </div>
     );
   }
 
+  /*
+   * Success screen
+   */
   if (submitted) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
 
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-xl w-full text-center">
 
@@ -170,7 +378,9 @@ function ApplicationForm() {
           </h1>
 
           <p className="text-gray-600 mt-4">
-            Your {service.serviceName} application has been
+            Your{" "}
+            {service.serviceName}{" "}
+            application has been
             submitted successfully.
           </p>
 
@@ -187,8 +397,9 @@ function ApplicationForm() {
           </div>
 
           <p className="text-gray-500 mt-6">
-            Please keep this application number safe for
-            tracking your application.
+            Please keep this application
+            number safe for tracking
+            your application.
           </p>
 
         </div>
@@ -197,8 +408,13 @@ function ApplicationForm() {
     );
   }
 
+  const requiredDocuments =
+    normalizeDocuments(
+      service.requiredDocuments
+    );
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-50">
 
       {/* Header */}
 
@@ -233,7 +449,8 @@ function ApplicationForm() {
               </h2>
 
               <p className="text-gray-500 mt-2">
-                Category: {service.category}
+                Category:{" "}
+                {service.category}
               </p>
 
             </div>
@@ -263,7 +480,9 @@ function ApplicationForm() {
             placeholder="Enter your full name"
             value={customerName}
             onChange={(e) =>
-              setCustomerName(e.target.value)
+              setCustomerName(
+                e.target.value
+              )
             }
             className="w-full border rounded-xl p-4 mb-6 outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -280,7 +499,10 @@ function ApplicationForm() {
             value={mobile}
             onChange={(e) =>
               setMobile(
-                e.target.value.replace(/\D/g, "")
+                e.target.value.replace(
+                  /\D/g,
+                  ""
+                )
               )
             }
             className="w-full border rounded-xl p-4 outline-none focus:ring-2 focus:ring-blue-500"
@@ -297,38 +519,76 @@ function ApplicationForm() {
           </h2>
 
           <p className="text-gray-500 mt-2 mb-6">
-            Please upload clear photos of the required
-            documents.
+            Please upload clear photos
+            of the required documents.
           </p>
 
-          {service.requiredDocuments?.length > 0 ? (
+          {requiredDocuments.length >
+          0 ? (
 
-            service.requiredDocuments.map(
-              (documentName: string) => (
+            <div className="space-y-6">
 
-                <DocumentUploader
-                  key={documentName}
-                  title={documentName}
-                  folder={`applications/${service.id}`}
-                  onUploaded={(url) => {
-                    setDocuments((previous) => ({
-                      ...previous,
-                      [documentName]: url,
-                    }));
-                  }}
-                />
+              {requiredDocuments.map(
+                (documentName) => (
 
-              )
-            )
+                  <div
+                    key={documentName}
+                    className="border rounded-2xl p-5"
+                  >
+
+                    <DocumentUploader
+                      title={
+                        documentName
+                      }
+                      folder={`applications/${service.id}`}
+                      onUploaded={(
+                        url
+                      ) => {
+
+                        setDocuments(
+                          (
+                            previous
+                          ) => {
+
+                            const updated = {
+                              ...previous,
+                            };
+
+                            if (url) {
+                              updated[
+                                documentName
+                              ] = url;
+                            } else {
+                              delete updated[
+                                documentName
+                              ];
+                            }
+
+                            return updated;
+                          }
+                        );
+
+                      }}
+                    />
+
+                  </div>
+
+                )
+              )}
+
+            </div>
 
           ) : (
 
             <div className="bg-yellow-50 text-yellow-700 p-4 rounded-xl">
-              No required documents have been added for
+              No required documents
+              have been added for
               this service.
             </div>
 
           )}
+
+          {/* Error */}
 
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-xl mt-6">
@@ -336,10 +596,16 @@ function ApplicationForm() {
             </div>
           )}
 
+          {/* Submit */}
+
           <button
             type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
+            onClick={
+              handleSubmit
+            }
+            disabled={
+              submitting
+            }
             className="w-full mt-8 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-4 rounded-xl text-lg font-semibold transition"
           >
             {submitting

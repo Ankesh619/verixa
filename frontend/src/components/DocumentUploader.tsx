@@ -1,10 +1,5 @@
 import { useRef, useState } from "react";
-import {
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
-import { storage } from "../firebase";
+import { supabase } from "../supabase";
 
 type Props = {
   title: string;
@@ -29,7 +24,7 @@ function DocumentUploader({
     fileInputRef.current?.click();
   };
 
-  const uploadFile = (file: File) => {
+  const uploadFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       setError("Please select an image file.");
       return;
@@ -45,78 +40,71 @@ function DocumentUploader({
     setProgress(0);
     setStatus("Uploading...");
 
-    const fileName =
-      `${Date.now()}_${file.name.replace(
+    try {
+      const safeFileName = file.name.replace(
         /[^a-zA-Z0-9.-]/g,
         "_"
-      )}`;
+      );
 
-    const storageRef = ref(
-      storage,
-      `${folder}/${fileName}`
-    );
+      const fileName = `${Date.now()}_${safeFileName}`;
 
-    const uploadTask = uploadBytesResumable(
-      storageRef,
-      file
-    );
+      /*
+       * folder example:
+       * applications/service-id
+       */
+      const filePath = `${folder}/${fileName}`;
 
-    uploadTask.on(
-      "state_changed",
+      setProgress(20);
 
-      (snapshot) => {
-        const percentage = Math.round(
-          (snapshot.bytesTransferred /
-            snapshot.totalBytes) *
-            100
-        );
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type,
+        });
 
-        setProgress(percentage);
-      },
-
-      (error) => {
-        console.error(
-          "Firebase Storage Upload Error:",
-          error
-        );
-
-        setUploading(false);
-        setProgress(0);
-        setStatus("");
-        setError(
-          error.message ||
-            "Document upload failed."
-        );
-      },
-
-      async () => {
-        try {
-          const url =
-            await getDownloadURL(uploadTask.snapshot.ref);
-
-          setPreview(url);
-
-          onUploaded(url);
-
-          setUploading(false);
-          setProgress(100);
-          setStatus("Document Uploaded Successfully");
-        } catch (error: any) {
-          console.error(
-            "Download URL Error:",
-            error
-          );
-
-          setUploading(false);
-          setStatus("");
-
-          setError(
-            error.message ||
-              "Could not get uploaded document URL."
-          );
-        }
+      if (uploadError) {
+        throw uploadError;
       }
-    );
+
+      setProgress(80);
+
+      const { data } = supabase.storage
+        .from("documents")
+        .getPublicUrl(filePath);
+
+      const publicUrl = data.publicUrl;
+
+      if (!publicUrl) {
+        throw new Error(
+          "Could not get uploaded document URL."
+        );
+      }
+
+      setProgress(100);
+
+      setPreview(publicUrl);
+
+      onUploaded(publicUrl);
+
+      setUploading(false);
+      setStatus("Document Uploaded Successfully");
+    } catch (error: any) {
+      console.error(
+        "Supabase Storage Upload Error:",
+        error
+      );
+
+      setUploading(false);
+      setProgress(0);
+      setStatus("");
+
+      setError(
+        error?.message ||
+          "Document upload failed."
+      );
+    }
   };
 
   const onFileChange = (
@@ -144,7 +132,7 @@ function DocumentUploader({
   };
 
   return (
-    <div className="border rounded-2xl p-5 mb-5 bg-white">
+    <div className="flex flex-col gap-4">
 
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
 
@@ -179,9 +167,10 @@ function DocumentUploader({
       />
 
       {uploading && (
-        <div className="mt-5">
+        <div className="mt-2">
 
           <div className="flex justify-between text-sm mb-2">
+
             <span className="text-blue-600 font-semibold">
               Uploading...
             </span>
@@ -189,6 +178,7 @@ function DocumentUploader({
             <span className="font-semibold">
               {progress}%
             </span>
+
           </div>
 
           <div className="w-full bg-gray-200 rounded-full h-3">
@@ -206,7 +196,7 @@ function DocumentUploader({
       )}
 
       {preview && !uploading && (
-        <div className="mt-6">
+        <div className="mt-2">
 
           <p className="text-green-600 font-semibold mb-3">
             ✅ Document Uploaded Successfully
@@ -230,7 +220,7 @@ function DocumentUploader({
       )}
 
       {error && (
-        <div className="mt-4 bg-red-50 text-red-600 p-4 rounded-xl">
+        <div className="mt-2 bg-red-50 text-red-600 p-4 rounded-xl">
           {error}
         </div>
       )}
@@ -238,7 +228,7 @@ function DocumentUploader({
       {!uploading &&
         !preview &&
         status && (
-          <p className="mt-4 text-green-600 font-semibold">
+          <p className="mt-2 text-green-600 font-semibold">
             {status}
           </p>
         )}
