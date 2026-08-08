@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home from "../pages/Home";
@@ -12,44 +13,107 @@ import Payments from "../pages/Payments";
 
 import StartService from "../pages/StartService";
 import ServiceDetails from "../pages/ServiceDetails";
+
 import AdminLogin from "../admin/AdminLogin";
 import AdminDashboard from "../admin/AdminDashboard";
 import Services from "../admin/Services";
 import AddService from "../admin/AddService";
+import AdminApplications from "../admin/Applications";
+
 import ApplicationForm from "../pages/ApplicationForm";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
 
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/otp" element={<Otp />} />
-
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/edit-profile" element={<EditProfile />} />
-        <Route path="/applications" element={<Applications />} />
-        <Route path="/track-application" element={<TrackApplication />} />
-        <Route path="/payments" element={<Payments />} />
         <Route
-  path="/apply/:serviceId"
-  element={<ApplicationForm />}
-/>
-        <Route path="/start-service" element={<StartService />} />
-        <Route path="/service/:id" element={<ServiceDetails />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
+          path="/"
+          element={<Home />}
+        />
+
         <Route
-  path="/admin/add-service"
-  element={<AddService />}
-/>
-<Route path="/admin/dashboard" element={<AdminDashboard />} />
-<Route
-  path="/admin/services"
-  element={<Services />}
-/>
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/otp"
+          element={<Otp />}
+        />
+
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
+        />
+
+        <Route
+          path="/profile"
+          element={<Profile />}
+        />
+
+        <Route
+          path="/edit-profile"
+          element={<EditProfile />}
+        />
+
+        <Route
+          path="/applications"
+          element={<Applications />}
+        />
+
+        <Route
+          path="/track-application"
+          element={<TrackApplication />}
+        />
+
+        <Route
+          path="/payments"
+          element={<Payments />}
+        />
+
+        <Route
+          path="/apply/:serviceId"
+          element={<ApplicationForm />}
+        />
+
+        <Route
+          path="/start-service"
+          element={<StartService />}
+        />
+
+        <Route
+          path="/service/:id"
+          element={<ServiceDetails />}
+        />
+
+        {/* Admin */}
+
+        <Route
+          path="/admin/login"
+          element={<AdminLogin />}
+        />
+
+        <Route
+          path="/admin/dashboard"
+          element={<AdminDashboard />}
+        />
+
+        <Route
+          path="/admin/services"
+          element={<Services />}
+        />
+
+        <Route
+          path="/admin/add-service"
+          element={<AddService />}
+        />
+
+        <Route
+          path="/admin/applications"
+          element={<AdminApplications />}
+        />
+
       </Routes>
     </BrowserRouter>
   );
