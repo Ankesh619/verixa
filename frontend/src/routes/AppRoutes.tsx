@@ -1,5 +1,8 @@
-
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 
 import Home from "../pages/Home";
 import Login from "../pages/Login";
@@ -20,12 +23,18 @@ import Services from "../admin/Services";
 import AddService from "../admin/AddService";
 import AdminApplications from "../admin/Applications";
 import ApplicationDetails from "../admin/ApplicationDetails";
+
 import ApplicationForm from "../pages/ApplicationForm";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
+
       <Routes>
+
+        {/* =========================
+            USER ROUTES
+        ========================== */}
 
         <Route
           path="/"
@@ -87,7 +96,9 @@ function AppRoutes() {
           element={<ServiceDetails />}
         />
 
-        {/* Admin */}
+        {/* =========================
+            ADMIN ROUTES
+        ========================== */}
 
         <Route
           path="/admin/login"
@@ -100,6 +111,16 @@ function AppRoutes() {
         />
 
         <Route
+          path="/admin/applications"
+          element={<AdminApplications />}
+        />
+
+        <Route
+          path="/admin/applications/:id"
+          element={<ApplicationDetails />}
+        />
+
+        <Route
           path="/admin/services"
           element={<Services />}
         />
@@ -108,16 +129,9 @@ function AppRoutes() {
           path="/admin/add-service"
           element={<AddService />}
         />
-        <Route
-  path="/admin/applications/:id"
-  element={<ApplicationDetails />}
-/>
-        <Route
-          path="/admin/applications"
-          element={<AdminApplications />}
-        />
 
       </Routes>
+
     </BrowserRouter>
   );
 }
