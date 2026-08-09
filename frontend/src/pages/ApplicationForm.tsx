@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../supabase";
 import DocumentUploader from "../components/DocumentUploader";
 
@@ -13,6 +13,7 @@ type Service = {
 
 function ApplicationForm() {
   const { serviceId } = useParams();
+  const navigate = useNavigate();
 
   const [service, setService] = useState<Service | null>(null);
 
@@ -24,8 +25,6 @@ function ApplicationForm() {
   }>({});
 
   const [submitting, setSubmitting] = useState(false);
-  const [applicationNo, setApplicationNo] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
   /*
@@ -34,7 +33,7 @@ function ApplicationForm() {
    * Supabase JSONB may return:
    * ["Aadhaar Front", "PAN Card"]
    *
-   * or sometimes:
+   * or:
    * {"0":"Aadhaar Front","1":"PAN Card"}
    *
    * or a JSON string.
@@ -79,9 +78,7 @@ function ApplicationForm() {
       return [];
     }
 
-    if (
-      typeof value === "object"
-    ) {
+    if (typeof value === "object") {
       return Object.values(value).filter(
         (item): item is string =>
           typeof item === "string"
@@ -91,6 +88,9 @@ function ApplicationForm() {
     return [];
   };
 
+  /*
+   * Load service
+   */
   useEffect(() => {
     const loadService = async () => {
       if (!serviceId) {
@@ -101,7 +101,10 @@ function ApplicationForm() {
       try {
         setError("");
 
-        const { data, error } = await supabase
+        const {
+          data,
+          error,
+        } = await supabase
           .from("services")
           .select("*")
           .eq("id", serviceId)
@@ -161,6 +164,9 @@ function ApplicationForm() {
     loadService();
   }, [serviceId]);
 
+  /*
+   * Submit application
+   */
   const handleSubmit = async () => {
     setError("");
 
@@ -306,11 +312,14 @@ function ApplicationForm() {
         throw numberError;
       }
 
-      setApplicationNo(
-        generatedApplicationNo
+      /*
+       * Application created successfully.
+       *
+       * Redirect customer to payment page.
+       */
+      navigate(
+        `/payments?applicationId=${application.id}`
       );
-
-      setSubmitted(true);
     } catch (err: any) {
       console.error(
         "Application Submit Error:",
@@ -332,8 +341,7 @@ function ApplicationForm() {
   if (error && !service) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-xl w-full text-center">
-
+        <div className="bg-white rounded-2xl shadow-lg p-8 text-center max-w-lg w-full">
           <div className="text-5xl mb-5">
             ⚠️
           </div>
@@ -341,7 +349,6 @@ function ApplicationForm() {
           <h1 className="text-2xl font-bold text-red-600">
             {error}
           </h1>
-
         </div>
       </div>
     );
@@ -353,57 +360,16 @@ function ApplicationForm() {
   if (!service) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-xl font-semibold text-gray-600">
-          Loading service...
-        </div>
-      </div>
-    );
-  }
-
-  /*
-   * Success screen
-   */
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-xl w-full text-center">
-
-          <div className="text-6xl mb-6">
-            ✅
+        <div className="text-center">
+          <div className="text-3xl mb-4">
+            Loading...
           </div>
 
-          <h1 className="text-3xl font-bold text-green-600">
-            Service Applied Successfully
-          </h1>
-
-          <p className="text-gray-600 mt-4">
-            Your{" "}
-            {service.serviceName}{" "}
-            application has been
-            submitted successfully.
+          <p className="text-gray-500">
+            Please wait while service
+            information is loading.
           </p>
-
-          <div className="bg-blue-50 rounded-2xl p-6 mt-8">
-
-            <p className="text-gray-600">
-              Application Number
-            </p>
-
-            <p className="text-2xl font-bold text-blue-600 mt-2">
-              {applicationNo}
-            </p>
-
-          </div>
-
-          <p className="text-gray-500 mt-6">
-            Please keep this application
-            number safe for tracking
-            your application.
-          </p>
-
         </div>
-
       </div>
     );
   }
@@ -415,13 +381,10 @@ function ApplicationForm() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* Header */}
 
       <div className="bg-blue-600 text-white p-8">
-
         <div className="max-w-5xl mx-auto">
-
           <h1 className="text-4xl font-bold">
             {service.serviceName}
           </h1>
@@ -429,21 +392,15 @@ function ApplicationForm() {
           <p className="mt-2 text-blue-100">
             Service Application
           </p>
-
         </div>
-
       </div>
 
       <div className="max-w-5xl mx-auto p-6 md:p-8">
-
         {/* Service Information */}
 
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-
           <div className="flex justify-between items-center flex-wrap gap-4">
-
             <div>
-
               <h2 className="text-2xl font-bold">
                 {service.serviceName}
               </h2>
@@ -452,21 +409,17 @@ function ApplicationForm() {
                 Category:{" "}
                 {service.category}
               </p>
-
             </div>
 
             <div className="text-2xl font-bold text-blue-600">
               ₹{service.price}
             </div>
-
           </div>
-
         </div>
 
         {/* Customer Details */}
 
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
-
           <h2 className="text-2xl font-bold mb-6">
             Customer Details
           </h2>
@@ -507,13 +460,11 @@ function ApplicationForm() {
             }
             className="w-full border rounded-xl p-4 outline-none focus:ring-2 focus:ring-blue-500"
           />
-
         </div>
 
         {/* Documents */}
 
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-
           <h2 className="text-2xl font-bold">
             Required Documents
           </h2>
@@ -525,17 +476,13 @@ function ApplicationForm() {
 
           {requiredDocuments.length >
           0 ? (
-
             <div className="space-y-6">
-
               {requiredDocuments.map(
                 (documentName) => (
-
                   <div
                     key={documentName}
                     className="border rounded-2xl p-5"
                   >
-
                     <DocumentUploader
                       title={
                         documentName
@@ -544,15 +491,14 @@ function ApplicationForm() {
                       onUploaded={(
                         url
                       ) => {
-
                         setDocuments(
                           (
                             previous
                           ) => {
-
-                            const updated = {
-                              ...previous,
-                            };
+                            const updated =
+                              {
+                                ...previous,
+                              };
 
                             if (url) {
                               updated[
@@ -567,25 +513,18 @@ function ApplicationForm() {
                             return updated;
                           }
                         );
-
                       }}
                     />
-
                   </div>
-
                 )
               )}
-
             </div>
-
           ) : (
-
             <div className="bg-yellow-50 text-yellow-700 p-4 rounded-xl">
               No required documents
               have been added for
               this service.
             </div>
-
           )}
 
           {/* Error */}
@@ -610,13 +549,10 @@ function ApplicationForm() {
           >
             {submitting
               ? "Submitting Application..."
-              : "Submit Application"}
+              : "Continue to Payment"}
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
 }
