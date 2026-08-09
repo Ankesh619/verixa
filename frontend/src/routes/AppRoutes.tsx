@@ -19,7 +19,7 @@ import AdminDashboard from "../admin/AdminDashboard";
 import Services from "../admin/Services";
 import AddService from "../admin/AddService";
 import AdminApplications from "../admin/Applications";
-
+import ApplicationDetails from "../admin/ApplicationDetails";
 import ApplicationForm from "../pages/ApplicationForm";
 
 function AppRoutes() {
@@ -108,7 +108,10 @@ function AppRoutes() {
           path="/admin/add-service"
           element={<AddService />}
         />
-
+        <Route
+  path="/admin/applications/:id"
+  element={<ApplicationDetails />}
+/>
         <Route
           path="/admin/applications"
           element={<AdminApplications />}
