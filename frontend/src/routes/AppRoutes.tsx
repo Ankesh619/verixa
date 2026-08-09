@@ -9,7 +9,7 @@ import EditProfile from "../pages/EditProfile";
 import Applications from "../pages/Applications";
 import TrackApplication from "../pages/TrackApplication";
 import Payments from "../pages/Payments";
-
+import Reports from "../admin/Reports";
 import StartService from "../pages/StartService";
 import ServiceDetails from "../pages/ServiceDetails";
 import ApplicationForm from "../pages/ApplicationForm";
@@ -77,7 +77,10 @@ function AppRoutes() {
           path="/payments"
           element={<Payments />}
         />
-
+        <Route
+  path="/admin/reports"
+  element={<Reports />}
+/>
         <Route
           path="/apply/:serviceId"
           element={<ApplicationForm />}
