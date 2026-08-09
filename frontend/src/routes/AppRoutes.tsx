@@ -12,23 +12,26 @@ import Payments from "../pages/Payments";
 
 import StartService from "../pages/StartService";
 import ServiceDetails from "../pages/ServiceDetails";
+import ApplicationForm from "../pages/ApplicationForm";
 
+// Admin
 import AdminLogin from "../admin/AdminLogin";
 import AdminDashboard from "../admin/AdminDashboard";
-import Services from "../admin/Services";
-import AddService from "../admin/AddService";
 import AdminApplications from "../admin/Applications";
 import ApplicationDetails from "../admin/ApplicationDetails";
 import Customers from "../admin/Customers";
-
-import ApplicationForm from "../pages/ApplicationForm";
+import Services from "../admin/Services";
+import AddService from "../admin/AddService";
+import AdminPayments from "../admin/Payments";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* Public */}
+        {/* =========================
+            PUBLIC ROUTES
+        ========================= */}
 
         <Route
           path="/"
@@ -90,7 +93,9 @@ function AppRoutes() {
           element={<ServiceDetails />}
         />
 
-        {/* Admin */}
+        {/* =========================
+            ADMIN ROUTES
+        ========================= */}
 
         <Route
           path="/admin/login"
@@ -125,6 +130,11 @@ function AppRoutes() {
         <Route
           path="/admin/add-service"
           element={<AddService />}
+        />
+
+        <Route
+          path="/admin/payments"
+          element={<AdminPayments />}
         />
 
       </Routes>
