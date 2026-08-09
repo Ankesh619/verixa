@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+
 import {
   CreditCard,
   CheckCircle,
@@ -10,6 +11,7 @@ import {
   ArrowLeft,
   Receipt,
 } from "lucide-react";
+
 import { supabase } from "../supabase";
 
 type Application = {
@@ -42,7 +44,8 @@ declare global {
 }
 
 function Payments() {
-  const [searchParams] = useSearchParams();
+  const [searchParams] =
+    useSearchParams();
 
   const applicationId =
     searchParams.get("applicationId");
@@ -59,9 +62,6 @@ function Payments() {
   const [paying, setPaying] =
     useState(false);
 
-  const [verifying, setVerifying] =
-    useState(false);
-
   const [error, setError] =
     useState("");
 
@@ -69,138 +69,165 @@ function Payments() {
     useState("");
 
   /*
-   * Load Razorpay Checkout
+   * Load Razorpay Checkout script
    */
-  const loadRazorpayScript = () => {
-    return new Promise<boolean>((resolve) => {
-      if (window.Razorpay) {
-        resolve(true);
-        return;
-      }
 
-      const existingScript =
-        document.querySelector(
-          'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
-        );
+  const loadRazorpayScript =
+    () => {
+      return new Promise<boolean>(
+        (resolve) => {
+          if (window.Razorpay) {
+            resolve(true);
+            return;
+          }
 
-      if (existingScript) {
-        existingScript.addEventListener(
-          "load",
-          () => resolve(true)
-        );
+          const existingScript =
+            document.querySelector(
+              'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+            );
 
-        existingScript.addEventListener(
-          "error",
-          () => resolve(false)
-        );
+          if (existingScript) {
+            existingScript.addEventListener(
+              "load",
+              () => resolve(true)
+            );
 
-        return;
-      }
+            existingScript.addEventListener(
+              "error",
+              () => resolve(false)
+            );
 
-      const script =
-        document.createElement("script");
+            return;
+          }
 
-      script.src =
-        "https://checkout.razorpay.com/v1/checkout.js";
+          const script =
+            document.createElement(
+              "script"
+            );
 
-      script.async = true;
+          script.src =
+            "https://checkout.razorpay.com/v1/checkout.js";
 
-      script.onload = () =>
-        resolve(true);
+          script.async = true;
 
-      script.onerror = () =>
-        resolve(false);
+          script.onload = () =>
+            resolve(true);
 
-      document.body.appendChild(script);
-    });
-  };
+          script.onerror = () =>
+            resolve(false);
+
+          document.body.appendChild(
+            script
+          );
+        }
+      );
+    };
 
   /*
-   * Load application + payment history
+   * Load application and payment history
    */
-  const loadPaymentData = async () => {
-    try {
-      setLoading(true);
-      setError("");
 
-      if (!applicationId) {
+  const loadPaymentData =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
+        setSuccessMessage("");
+
+        if (!applicationId) {
+          setError(
+            "Application ID is missing. Please open the payment page from your application."
+          );
+
+          setLoading(false);
+          return;
+        }
+
+        /*
+         * Load application
+         */
+
+        const {
+          data: applicationData,
+          error: applicationError,
+        } = await supabase
+          .from("applications")
+          .select(
+            "id, customerName, mobile, serviceName, price, status"
+          )
+          .eq(
+            "id",
+            applicationId
+          )
+          .single();
+
+        if (applicationError) {
+          console.error(
+            "Application Load Error:",
+            applicationError
+          );
+
+          throw applicationError;
+        }
+
+        if (!applicationData) {
+          throw new Error(
+            "Application not found."
+          );
+        }
+
+        setApplication(
+          applicationData as Application
+        );
+
+        /*
+         * Load payment history
+         */
+
+        const {
+          data: paymentData,
+          error: paymentError,
+        } = await supabase
+          .from("payments")
+          .select("*")
+          .eq(
+            "applicationId",
+            applicationId
+          )
+          .order(
+            "createdAt",
+            {
+              ascending: false,
+            }
+          );
+
+        if (paymentError) {
+          console.error(
+            "Payment History Error:",
+            paymentError
+          );
+
+          throw paymentError;
+        }
+
+        setPayments(
+          (paymentData ||
+            []) as Payment[]
+        );
+      } catch (err: any) {
+        console.error(
+          "Payment Page Error:",
+          err
+        );
+
         setError(
-          "Application ID is missing. Please open the payment page from your application."
+          err?.message ||
+            "Unable to load payment information."
         );
-
-        return;
+      } finally {
+        setLoading(false);
       }
-
-      const {
-        data: applicationData,
-        error: applicationError,
-      } = await supabase
-        .from("applications")
-        .select(
-          "id, customerName, mobile, serviceName, price, status"
-        )
-        .eq("id", applicationId)
-        .single();
-
-      if (applicationError) {
-        console.error(
-          "Application Load Error:",
-          applicationError
-        );
-
-        throw applicationError;
-      }
-
-      if (!applicationData) {
-        throw new Error(
-          "Application not found."
-        );
-      }
-
-      setApplication(
-        applicationData as Application
-      );
-
-      const {
-        data: paymentData,
-        error: paymentError,
-      } = await supabase
-        .from("payments")
-        .select("*")
-        .eq(
-          "applicationId",
-          applicationId
-        )
-        .order("createdAt", {
-          ascending: false,
-        });
-
-      if (paymentError) {
-        console.error(
-          "Payment History Error:",
-          paymentError
-        );
-
-        throw paymentError;
-      }
-
-      setPayments(
-        (paymentData || []) as Payment[]
-      );
-    } catch (err: any) {
-      console.error(
-        "Payment Page Error:",
-        err
-      );
-
-      setError(
-        err?.message ||
-          "Unable to load payment information."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   useEffect(() => {
     loadPaymentData();
@@ -209,29 +236,27 @@ function Payments() {
   /*
    * Verify Razorpay payment
    */
-  const verifyPayment = async (
-    response: any
-  ) => {
-    if (!application) {
-      throw new Error(
-        "Application information is missing."
-      );
-    }
 
-    if (
-      !response?.razorpay_payment_id ||
-      !response?.razorpay_order_id ||
-      !response?.razorpay_signature
-    ) {
-      throw new Error(
-        "Razorpay payment response is incomplete."
-      );
-    }
+  const verifyPayment =
+    async (
+      response: any
+    ) => {
+      if (!application) {
+        throw new Error(
+          "Application information is not available."
+        );
+      }
 
-    setVerifying(true);
-    setError("");
+      if (
+        !response?.razorpay_order_id ||
+        !response?.razorpay_payment_id ||
+        !response?.razorpay_signature
+      ) {
+        throw new Error(
+          "Razorpay did not return complete payment verification information."
+        );
+      }
 
-    try {
       const {
         data: verificationData,
         error: verificationError,
@@ -243,13 +268,13 @@ function Payments() {
               applicationId:
                 application.id,
 
-              razorpay_payment_id:
-                response.razorpay_payment_id,
-
-              razorpay_order_id:
+              razorpayOrderId:
                 response.razorpay_order_id,
 
-              razorpay_signature:
+              razorpayPaymentId:
+                response.razorpay_payment_id,
+
+              razorpaySignature:
                 response.razorpay_signature,
             },
           }
@@ -257,17 +282,12 @@ function Payments() {
 
       if (verificationError) {
         console.error(
-          "Verification Function Error:",
+          "Payment Verification Function Error:",
           verificationError
         );
 
         throw verificationError;
       }
-
-      console.log(
-        "Verification Response:",
-        verificationData
-      );
 
       if (
         !verificationData ||
@@ -279,324 +299,367 @@ function Payments() {
         );
       }
 
-      setSuccessMessage(
-        "Payment successful and verified successfully."
-      );
-
-      await loadPaymentData();
-    } finally {
-      setVerifying(false);
-    }
-  };
+      return verificationData;
+    };
 
   /*
    * Start Razorpay payment
    */
-  const handlePayNow = async () => {
-    try {
-      setPaying(true);
-      setError("");
-      setSuccessMessage("");
 
-      if (!application) {
-        setError(
-          "Application information is not available."
-        );
+  const handlePayNow =
+    async () => {
+      try {
+        setPaying(true);
+        setError("");
+        setSuccessMessage("");
 
-        return;
-      }
-
-      /*
-       * Already paid?
-       */
-      const successfulPayment =
-        payments.find((payment) => {
-          const status =
-            payment.status?.toLowerCase();
-
-          return (
-            status === "success" ||
-            status === "completed"
+        if (!application) {
+          setError(
+            "Application information is not available."
           );
-        });
-
-      if (successfulPayment) {
-        setSuccessMessage(
-          "This application has already been paid successfully."
-        );
-
-        return;
-      }
-
-      /*
-       * Load Razorpay
-       */
-      const razorpayLoaded =
-        await loadRazorpayScript();
-
-      if (!razorpayLoaded) {
-        throw new Error(
-          "Unable to load Razorpay Checkout. Please check your internet connection and try again."
-        );
-      }
-
-      /*
-       * Create order
-       */
-      const {
-        data: orderData,
-        error: functionError,
-      } =
-        await supabase.functions.invoke(
-          "create-razorpay-order",
-          {
-            body: {
-              applicationId:
-                application.id,
-            },
-          }
-        );
-
-      if (functionError) {
-        console.error(
-          "Create Order Function Error:",
-          functionError
-        );
-
-        throw functionError;
-      }
-
-      if (
-        !orderData ||
-        !orderData.success
-      ) {
-        throw new Error(
-          orderData?.error ||
-            "Unable to create Razorpay order."
-        );
-      }
-
-      /*
-       * Razorpay options
-       */
-      const options = {
-        key: orderData.keyId,
-
-        amount:
-          orderData.amount,
-
-        currency:
-          orderData.currency || "INR",
-
-        name: "VERIXA",
-
-        description:
-          application.serviceName ||
-          "Service Payment",
-
-        order_id:
-          orderData.orderId,
-
-        prefill: {
-          name:
-            application.customerName ||
-            "",
-
-          contact:
-            application.mobile
-              ? `+91${application.mobile}`
-              : "",
-        },
-
-        notes: {
-          applicationId:
-            application.id,
-        },
-
-        theme: {
-          color: "#2563eb",
-        },
-
-        modal: {
-          confirm_close: true,
-          escape: true,
-          backdropclose: false,
-        },
+          return;
+        }
 
         /*
-         * Razorpay success
+         * Check existing successful payment
          */
-        handler: async (
-          response: any
-        ) => {
-          try {
-            console.log(
-              "Razorpay Payment Response:",
+
+        const successfulPayment =
+          payments.find(
+            (payment) => {
+              const status =
+                payment.status?.toLowerCase();
+
+              return (
+                status === "success" ||
+                status === "completed"
+              );
+            }
+          );
+
+        if (successfulPayment) {
+          setSuccessMessage(
+            "This application has already been paid successfully."
+          );
+
+          return;
+        }
+
+        /*
+         * Load Razorpay Checkout
+         */
+
+        const razorpayLoaded =
+          await loadRazorpayScript();
+
+        if (!razorpayLoaded) {
+          throw new Error(
+            "Unable to load Razorpay Checkout. Please check your internet connection and try again."
+          );
+        }
+
+        /*
+         * Create Razorpay Order
+         */
+
+        const {
+          data: orderData,
+          error: functionError,
+        } =
+          await supabase.functions.invoke(
+            "create-razorpay-order",
+            {
+              body: {
+                applicationId:
+                  application.id,
+              },
+            }
+          );
+
+        if (functionError) {
+          console.error(
+            "Razorpay Function Error:",
+            functionError
+          );
+
+          throw functionError;
+        }
+
+        if (
+          !orderData ||
+          !orderData.success
+        ) {
+          throw new Error(
+            orderData?.error ||
+              "Unable to create Razorpay order."
+          );
+        }
+
+        /*
+         * Razorpay Checkout options
+         */
+
+        const options = {
+          key:
+            orderData.keyId,
+
+          amount:
+            orderData.amount,
+
+          currency:
+            orderData.currency ||
+            "INR",
+
+          name: "VERIXA",
+
+          description:
+            application.serviceName ||
+            "Service Payment",
+
+          order_id:
+            orderData.orderId,
+
+          prefill: {
+            name:
+              application.customerName ||
+              "",
+
+            contact:
+              application.mobile
+                ? `+91${application.mobile}`
+                : "",
+          },
+
+          notes: {
+            applicationId:
+              application.id,
+          },
+
+          theme: {
+            color: "#2563eb",
+          },
+
+          modal: {
+            confirm_close: true,
+            escape: true,
+            backdropclose: false,
+          },
+
+          /*
+           * Razorpay successful response
+           * must be verified by Supabase.
+           */
+
+          handler:
+            async (
+              response: any
+            ) => {
+              try {
+                setPaying(true);
+                setError("");
+
+                setSuccessMessage(
+                  "Payment received. Verifying payment..."
+                );
+
+                /*
+                 * Server-side verification
+                 */
+
+                const verification =
+                  await verifyPayment(
+                    response
+                  );
+
+                console.log(
+                  "Payment Verification Result:",
+                  verification
+                );
+
+                /*
+                 * Reload payment history
+                 */
+
+                await loadPaymentData();
+
+                setSuccessMessage(
+                  verification?.alreadyPaid
+                    ? "This application was already marked as paid."
+                    : "Payment verified successfully. Your payment information has been updated."
+                );
+              } catch (
+                err: any
+              ) {
+                console.error(
+                  "Payment Verification Error:",
+                  err
+                );
+
+                setError(
+                  err?.message ||
+                    "Payment was received but verification failed. Please contact support."
+                );
+
+                setSuccessMessage(
+                  ""
+                );
+              } finally {
+                setPaying(false);
+              }
+            },
+        };
+
+        /*
+         * Open Razorpay Checkout
+         */
+
+        const razorpay =
+          new window.Razorpay(
+            options
+          );
+
+        razorpay.on(
+          "payment.failed",
+          (
+            response: any
+          ) => {
+            console.error(
+              "Razorpay Payment Failed:",
               response
+            );
+
+            setError(
+              response?.error
+                ?.description ||
+                "Payment failed. Please try again."
             );
 
             setSuccessMessage(
-              "Payment received. Verifying payment..."
+              ""
             );
-
-            await verifyPayment(
-              response
-            );
-          } catch (err: any) {
-            console.error(
-              "Payment Verification Error:",
-              err
-            );
-
-            setSuccessMessage("");
-
-            setError(
-              err?.message ||
-                "Payment was received but verification failed. Please contact support."
-            );
-
-            await loadPaymentData();
           }
-        },
-      };
-
-      /*
-       * Razorpay instance
-       */
-      const razorpay =
-        new window.Razorpay(
-          options
         );
 
-      /*
-       * Failed payment
-       */
-      razorpay.on(
-        "payment.failed",
-        (response: any) => {
-          console.error(
-            "Razorpay Payment Failed:",
-            response
-          );
+        razorpay.open();
+      } catch (
+        err: any
+      ) {
+        console.error(
+          "Payment Creation Error:",
+          err
+        );
 
-          setError(
-            response?.error?.description ||
-              "Payment failed. Please try again."
-          );
-
-          setSuccessMessage("");
-        }
-      );
-
-      /*
-       * Open popup
-       */
-      razorpay.open();
-    } catch (err: any) {
-      console.error(
-        "Payment Creation Error:",
-        err
-      );
-
-      setError(
-        err?.message ||
-          "Unable to start payment."
-      );
-    } finally {
-      setPaying(false);
-    }
-  };
+        setError(
+          err?.message ||
+            "Unable to start payment."
+        );
+      } finally {
+        setPaying(false);
+      }
+    };
 
   /*
    * Format date
    */
-  const formatDate = (
-    date: string | null
-  ) => {
-    if (!date) {
-      return "-";
-    }
 
-    return new Date(
-      date
-    ).toLocaleString("en-IN", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  };
+  const formatDate =
+    (
+      date: string | null
+    ) => {
+      if (!date) {
+        return "-";
+      }
+
+      return new Date(
+        date
+      ).toLocaleString(
+        "en-IN",
+        {
+          dateStyle:
+            "medium",
+          timeStyle:
+            "short",
+        }
+      );
+    };
 
   /*
    * Status class
    */
-  const getStatusClass = (
-    status: string | null
-  ) => {
-    switch (
-      status?.toLowerCase()
-    ) {
-      case "success":
-      case "completed":
-        return "bg-green-100 text-green-700";
 
-      case "failed":
-        return "bg-red-100 text-red-700";
+  const getStatusClass =
+    (
+      status: string | null
+    ) => {
+      switch (
+        status?.toLowerCase()
+      ) {
+        case "success":
+        case "completed":
+          return "bg-green-100 text-green-700";
 
-      case "refunded":
-        return "bg-purple-100 text-purple-700";
+        case "failed":
+          return "bg-red-100 text-red-700";
 
-      case "pending":
-      default:
-        return "bg-yellow-100 text-yellow-700";
-    }
-  };
+        case "refunded":
+          return "bg-purple-100 text-purple-700";
+
+        case "pending":
+        default:
+          return "bg-yellow-100 text-yellow-700";
+      }
+    };
 
   /*
    * Status icon
    */
-  const getStatusIcon = (
-    status: string | null
-  ) => {
-    switch (
-      status?.toLowerCase()
-    ) {
-      case "success":
-      case "completed":
-        return (
-          <CheckCircle
-            size={18}
-            className="text-green-600"
-          />
-        );
 
-      case "failed":
-        return (
-          <XCircle
-            size={18}
-            className="text-red-600"
-          />
-        );
+  const getStatusIcon =
+    (
+      status: string | null
+    ) => {
+      switch (
+        status?.toLowerCase()
+      ) {
+        case "success":
+        case "completed":
+          return (
+            <CheckCircle
+              size={18}
+              className="text-green-600"
+            />
+          );
 
-      case "pending":
-        return (
-          <Clock
-            size={18}
-            className="text-yellow-600"
-          />
-        );
+        case "failed":
+          return (
+            <XCircle
+              size={18}
+              className="text-red-600"
+            />
+          );
 
-      default:
-        return (
-          <Clock
-            size={18}
-            className="text-gray-500"
-          />
-        );
-    }
-  };
+        case "pending":
+          return (
+            <Clock
+              size={18}
+              className="text-yellow-600"
+            />
+          );
+
+        default:
+          return (
+            <Clock
+              size={18}
+              className="text-gray-500"
+            />
+          );
+      }
+    };
 
   /*
    * Loading
    */
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -608,13 +671,16 @@ function Payments() {
   }
 
   /*
-   * Error page
+   * Error
    */
-  if (error && !application) {
+
+  if (
+    error &&
+    !application
+  ) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl shadow-xl p-8 max-w-lg w-full text-center">
-
           <XCircle
             size={55}
             className="mx-auto text-red-500"
@@ -629,7 +695,6 @@ function Payments() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 mt-7">
-
             <button
               type="button"
               onClick={
@@ -646,9 +711,7 @@ function Payments() {
             >
               Dashboard
             </Link>
-
           </div>
-
         </div>
       </div>
     );
@@ -660,28 +723,28 @@ function Payments() {
     );
 
   const successfulPayment =
-    payments.find((payment) => {
-      const status =
-        payment.status?.toLowerCase();
+    payments.find(
+      (payment) => {
+        const status =
+          payment.status?.toLowerCase();
 
-      return (
-        status === "success" ||
-        status === "completed"
-      );
-    });
+        return (
+          status === "success" ||
+          status === "completed"
+        );
+      }
+    );
 
   /*
    * Main UI
    */
+
   return (
     <div className="min-h-screen bg-slate-50">
-
       {/* Header */}
 
       <div className="bg-blue-600 text-white">
-
         <div className="max-w-6xl mx-auto px-6 py-8">
-
           <Link
             to="/dashboard"
             className="inline-flex items-center gap-2 text-blue-100 hover:text-white mb-6"
@@ -700,27 +763,21 @@ function Payments() {
           <p className="text-blue-100 mt-2">
             Complete payment for your service application
           </p>
-
         </div>
-
       </div>
 
       <div className="max-w-6xl mx-auto p-6 md:p-8">
-
         {/* Error */}
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6">
-
             <div className="flex items-start gap-3">
-
               <XCircle
                 size={22}
                 className="text-red-500 mt-0.5"
               />
 
               <div>
-
                 <p className="font-bold text-red-700">
                   Payment Error
                 </p>
@@ -728,11 +785,8 @@ function Payments() {
                 <p className="text-red-600 mt-1 break-words">
                   {error}
                 </p>
-
               </div>
-
             </div>
-
           </div>
         )}
 
@@ -740,16 +794,13 @@ function Payments() {
 
         {successMessage && (
           <div className="bg-green-50 border border-green-200 rounded-2xl p-5 mb-6">
-
             <div className="flex items-start gap-3">
-
               <CheckCircle
                 size={22}
                 className="text-green-600 mt-0.5"
               />
 
               <div>
-
                 <p className="font-bold text-green-700">
                   Payment Update
                 </p>
@@ -757,33 +808,24 @@ function Payments() {
                 <p className="text-green-600 mt-1">
                   {successMessage}
                 </p>
-
               </div>
-
             </div>
-
           </div>
         )}
 
         <div className="grid lg:grid-cols-2 gap-8">
-
-          {/* Payment Card */}
+          {/* Application / Payment Card */}
 
           <div className="bg-white rounded-3xl shadow-xl p-7 md:p-8">
-
             <div className="flex items-center gap-3 mb-7">
-
               <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-
                 <CreditCard
                   className="text-blue-600"
                   size={25}
                 />
-
               </div>
 
               <div>
-
                 <h2 className="text-2xl font-bold text-slate-800">
                   Pay Service Fee
                 </h2>
@@ -791,15 +833,12 @@ function Payments() {
                 <p className="text-gray-500">
                   Application payment
                 </p>
-
               </div>
-
             </div>
 
             {/* Service */}
 
             <div className="bg-blue-50 rounded-2xl p-6">
-
               <p className="text-gray-500 text-sm">
                 Service
               </p>
@@ -810,9 +849,7 @@ function Payments() {
               </h3>
 
               <div className="border-t border-blue-100 mt-5 pt-5">
-
                 <div className="flex justify-between gap-4">
-
                   <span className="text-gray-500">
                     Customer
                   </span>
@@ -821,11 +858,9 @@ function Payments() {
                     {application?.customerName ||
                       "-"}
                   </span>
-
                 </div>
 
                 <div className="flex justify-between gap-4 mt-3">
-
                   <span className="text-gray-500">
                     Mobile
                   </span>
@@ -834,11 +869,9 @@ function Payments() {
                     {application?.mobile ||
                       "-"}
                   </span>
-
                 </div>
 
                 <div className="flex justify-between gap-4 mt-3">
-
                   <span className="text-gray-500">
                     Application ID
                   </span>
@@ -847,19 +880,14 @@ function Payments() {
                     {application?.id ||
                       "-"}
                   </span>
-
                 </div>
-
               </div>
-
             </div>
 
             {/* Amount */}
 
             <div className="flex items-center justify-between mt-7 p-5 border rounded-2xl">
-
               <div className="flex items-center gap-2">
-
                 <IndianRupee
                   size={21}
                   className="text-green-600"
@@ -868,64 +896,46 @@ function Payments() {
                 <span className="font-semibold text-gray-600">
                   Amount Payable
                 </span>
-
               </div>
 
               <span className="text-3xl font-bold text-green-600">
                 ₹{amount}
               </span>
-
             </div>
 
-            {/* Pay Button */}
+            {/* Pay button */}
 
             {successfulPayment ? (
-
               <div className="mt-7">
-
                 <div className="w-full bg-green-100 text-green-700 py-4 rounded-xl font-bold flex items-center justify-center gap-2">
-
                   <CheckCircle
                     size={21}
                   />
 
                   Payment Successful
-
                 </div>
 
                 {successfulPayment.transactionId && (
                   <p className="text-center text-sm text-gray-500 mt-3">
-
-                    Transaction ID:{" "}
-
+                    Razorpay Payment ID:{" "}
                     <span className="font-mono">
-
                       {
                         successfulPayment.transactionId
                       }
-
                     </span>
-
                   </p>
                 )}
-
               </div>
-
             ) : (
-
               <button
                 type="button"
                 onClick={
                   handlePayNow
                 }
-                disabled={
-                  paying ||
-                  verifying
-                }
+                disabled={paying}
                 className="w-full mt-7 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-4 rounded-xl text-lg font-bold flex items-center justify-center gap-2 transition"
               >
-
-                {verifying ? (
+                {paying ? (
                   <>
                     <RefreshCw
                       size={21}
@@ -933,15 +943,6 @@ function Payments() {
                     />
 
                     Verifying Payment...
-                  </>
-                ) : paying ? (
-                  <>
-                    <RefreshCw
-                      size={21}
-                      className="animate-spin"
-                    />
-
-                    Starting Razorpay...
                   </>
                 ) : (
                   <>
@@ -952,34 +953,26 @@ function Payments() {
                     Pay ₹{amount}
                   </>
                 )}
-
               </button>
-
             )}
 
             <p className="text-center text-sm text-gray-500 mt-4">
               Secure payment powered by Razorpay.
             </p>
-
           </div>
 
           {/* Payment Information */}
 
           <div className="bg-white rounded-3xl shadow-xl p-7 md:p-8">
-
             <div className="flex items-center gap-3">
-
               <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
-
                 <Receipt
                   className="text-green-600"
                   size={25}
                 />
-
               </div>
 
               <div>
-
                 <h2 className="text-2xl font-bold text-slate-800">
                   Payment Information
                 </h2>
@@ -987,19 +980,15 @@ function Payments() {
                 <p className="text-gray-500">
                   Current payment status
                 </p>
-
               </div>
-
             </div>
 
             {/* Payment History */}
 
             <div className="mt-7 space-y-4">
-
-              {payments.length === 0 ? (
-
+              {payments.length ===
+              0 ? (
                 <div className="bg-gray-50 rounded-2xl p-6 text-center">
-
                   <Receipt
                     size={35}
                     className="mx-auto text-gray-400"
@@ -1008,23 +997,18 @@ function Payments() {
                   <p className="text-gray-500 mt-3">
                     No payment attempts yet.
                   </p>
-
                 </div>
-
               ) : (
-
                 payments.map(
                   (payment) => (
-
                     <div
-                      key={payment.id}
+                      key={
+                        payment.id
+                      }
                       className="border rounded-2xl p-5"
                     >
-
                       <div className="flex items-start justify-between gap-4">
-
                         <div>
-
                           <p className="font-bold text-slate-800">
                             {payment.paymentMethod ||
                               "Payment"}
@@ -1035,11 +1019,9 @@ function Payments() {
                               payment.createdAt
                             )}
                           </p>
-
                         </div>
 
                         <div className="flex items-center gap-2">
-
                           {getStatusIcon(
                             payment.status
                           )}
@@ -1052,33 +1034,27 @@ function Payments() {
                             {payment.status ||
                               "Pending"}
                           </span>
-
                         </div>
-
                       </div>
 
                       <div className="flex justify-between mt-4 pt-4 border-t">
-
                         <span className="text-gray-500">
                           Amount
                         </span>
 
                         <span className="font-bold text-green-600">
-
                           ₹
                           {Number(
-                            payment.amount || 0
+                            payment.amount ||
+                              0
                           )}
-
                         </span>
-
                       </div>
 
                       {payment.transactionId && (
                         <div className="mt-3">
-
                           <p className="text-sm text-gray-500">
-                            Razorpay Order ID
+                            Razorpay Payment ID
                           </p>
 
                           <p className="font-mono text-xs break-all mt-1 text-gray-700">
@@ -1086,13 +1062,11 @@ function Payments() {
                               payment.transactionId
                             }
                           </p>
-
                         </div>
                       )}
 
                       {payment.paidAt && (
                         <div className="mt-3">
-
                           <p className="text-sm text-gray-500">
                             Paid At
                           </p>
@@ -1102,25 +1076,16 @@ function Payments() {
                               payment.paidAt
                             )}
                           </p>
-
                         </div>
                       )}
-
                     </div>
-
                   )
                 )
-
               )}
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }
