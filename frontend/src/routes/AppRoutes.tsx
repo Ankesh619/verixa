@@ -1,5 +1,10 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 
+// Customer
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Otp from "../pages/Otp";
@@ -9,7 +14,6 @@ import EditProfile from "../pages/EditProfile";
 import Applications from "../pages/Applications";
 import TrackApplication from "../pages/TrackApplication";
 import Payments from "../pages/Payments";
-import Reports from "../admin/Reports";
 import StartService from "../pages/StartService";
 import ServiceDetails from "../pages/ServiceDetails";
 import ApplicationForm from "../pages/ApplicationForm";
@@ -23,6 +27,7 @@ import Customers from "../admin/Customers";
 import Services from "../admin/Services";
 import AddService from "../admin/AddService";
 import AdminPayments from "../admin/Payments";
+import Reports from "../admin/Reports";
 
 function AppRoutes() {
   return (
@@ -30,7 +35,7 @@ function AppRoutes() {
       <Routes>
 
         {/* =========================
-            PUBLIC ROUTES
+            PUBLIC / CUSTOMER ROUTES
         ========================= */}
 
         <Route
@@ -77,14 +82,6 @@ function AppRoutes() {
           path="/payments"
           element={<Payments />}
         />
-        <Route
-  path="/admin/reports"
-  element={<Reports />}
-/>
-        <Route
-          path="/apply/:serviceId"
-          element={<ApplicationForm />}
-        />
 
         <Route
           path="/start-service"
@@ -94,6 +91,11 @@ function AppRoutes() {
         <Route
           path="/service/:id"
           element={<ServiceDetails />}
+        />
+
+        <Route
+          path="/apply/:serviceId"
+          element={<ApplicationForm />}
         />
 
         {/* =========================
@@ -138,6 +140,18 @@ function AppRoutes() {
         <Route
           path="/admin/payments"
           element={<AdminPayments />}
+        />
+
+        <Route
+          path="/admin/reports"
+          element={<Reports />}
+        />
+
+        {/* Fallback */}
+
+        <Route
+          path="*"
+          element={<Home />}
         />
 
       </Routes>
