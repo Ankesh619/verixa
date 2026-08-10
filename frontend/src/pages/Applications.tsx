@@ -120,22 +120,22 @@ function Applications() {
     );
   };
 
-  const getSuccessfulPayment = (
-    applicationId: string
-  ) => {
-    return getApplicationPayments(
-      applicationId
-    ).find((payment) => {
-      const status =
-        payment.status?.toLowerCase();
+ const getSuccessfulPayment = (
+  applicationId: string
+) => {
+  return getApplicationPayments(
+    applicationId
+  ).find((payment) => {
+    const status =
+      payment.status?.toLowerCase();
 
-      return (
-        status === "success" ||
-        status === "completed"
-      );
-    });
-  };
-
+    return (
+      status === "paid" ||
+      status === "success" ||
+      status === "completed"
+    );
+  });
+};
   const getLatestPayment = (
     applicationId: string
   ) => {
